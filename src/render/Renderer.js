@@ -485,9 +485,9 @@ class Renderer {
   drawResults(race, stats) {
     const { ctx } = this;
     const rows = race.standings;
-    const unlockOffset = stats.unlocked ? 20 : 0;
+    const unlockOffset = stats.unlocked ? 22 : 0;
     const width = 460;
-    const height = 108 + unlockOffset + rows.length * 26;
+    const height = 126 + unlockOffset + rows.length * 26;
     const x = (VIEW_WIDTH - width) / 2;
     const y = (VIEW_HEIGHT - height) / 2;
 
@@ -512,14 +512,22 @@ class Renderer {
     ctx.font = '12px ui-monospace, monospace';
     ctx.fillText(subtitle, VIEW_WIDTH / 2, y + 68);
 
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '11px ui-monospace, monospace';
+    ctx.fillText(
+      `${race.averageCadence.toFixed(1)} pulsaciones/s de media${race.runner.stumbles ? `  ·  ${race.runner.stumbles} caída(s)` : ''}`,
+      VIEW_WIDTH / 2,
+      y + 88
+    );
+
     if (stats.unlocked) {
       ctx.fillStyle = COLORS.accent;
       ctx.font = 'bold 12px ui-monospace, monospace';
-      ctx.fillText(`DESBLOQUEADA: ${stats.unlocked}`, VIEW_WIDTH / 2, y + 88);
+      ctx.fillText(`DESBLOQUEADA: ${stats.unlocked}`, VIEW_WIDTH / 2, y + 110);
     }
 
     rows.forEach((row, i) => {
-      const rowY = y + 100 + unlockOffset + i * 26;
+      const rowY = y + 120 + unlockOffset + i * 26;
       ctx.textAlign = 'left';
       ctx.fillStyle = row.isPlayer ? COLORS.accent : COLORS.textDim;
       ctx.font = `${row.isPlayer ? 'bold ' : ''}14px ui-monospace, monospace`;

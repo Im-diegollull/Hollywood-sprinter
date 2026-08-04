@@ -178,6 +178,11 @@ class Race {
     return this.rivals.length + 1;
   }
 
+  /** Pulsaciones por segundo de toda la carrera. La medida honesta. */
+  get averageCadence() {
+    return this.time > 0 ? this.runner.strokes / this.time : 0;
+  }
+
   get playerPosition() {
     return this.standings?.find((entry) => entry.isPlayer)?.position ?? null;
   }

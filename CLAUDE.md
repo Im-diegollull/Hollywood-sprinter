@@ -488,19 +488,24 @@ export { Runner };
 
 ### Calibración actual (simulada, cadencia constante y perfecta)
 
-`SPEED_PER_CADENCE = 1.26` está calibrado para que **6 pulsaciones/s den 14.00 s**,
-justo el tiempo del mejor niño. Sin tope de velocidad, la escalera queda así:
+`SPEED_PER_CADENCE = 1.23` está calibrado para que **6 pulsaciones/s den 14.30 s**.
+Sin tope de velocidad, la escalera queda así:
 
 | Categoría | Tiempo | Puls/s para ganar |
 |---|---|---|
-| 1 Niños | 14.00 s | 6.0 |
-| 2 Physical Festival | 12.90 s | 6.6 |
-| 3 High School | 11.50 s | 7.5 |
-| 4 National Sport | 10.70 s | 8.1 |
-| 5 Olympics | 9.58 s | 9.2 |
-| 6 Cyborg | 9.00 s | 9.9 |
-| 7 Galaxy | 8.00 s | 11.5 |
-| 8 God Velocity | 7.50 s | 12.5 |
+| 1 Niños | 14.00 s | 6.1 |
+| 2 Physical Festival | 12.90 s | 6.7 |
+| 3 High School | 11.50 s | 7.6 |
+| 4 National Sport | 10.70 s | 8.3 |
+| 5 Olympics | 9.58 s | 9.4 |
+| 6 Cyborg | 9.00 s | 10.1 |
+| 7 Galaxy | 8.00 s | 11.8 |
+| 8 God Velocity | 7.50 s | 12.8 |
+
+La pantalla de resultados muestra tus **pulsaciones por segundo de media**. Es la
+forma de comprobar si la calibración está mal o si simplemente se pulsa más rápido
+de lo que uno cree: si el juego mide 10 y tú creías ir a 6, el problema no es la
+curva.
 
 Con el estimador de cadencia corregido estos números son honestos: el tiempo ya no
 depende de lo irregular que se pulse. Pulsando a 6/s con temblores de ±0% a ±70%
