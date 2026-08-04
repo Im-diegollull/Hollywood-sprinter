@@ -343,11 +343,11 @@ sprinter-remake/
 ### Semana 3-4 — Carrera completa
 **Objetivo:** una carrera de verdad con rivales y resultado.
 
-- [ ] Secuencia de salida: "En sus marcas... listos... ¡BANG!" (sin descalificación)
-- [ ] Clase Rival con velocidad constante
-- [ ] Varios rivales en carriles con tiempos distribuidos en el rango
-- [ ] Línea de meta y detección de llegada + posición final
-- [ ] Pantalla de resultado (tu tiempo, posición, tiempos de los rivales)
+- [x] Secuencia de salida: "En sus marcas... listos... ¡YA!" (sin descalificación)
+- [x] Clase Rival con velocidad constante
+- [x] Varios rivales en carriles con tiempos distribuidos en el rango
+- [x] Línea de meta y detección de llegada + posición final
+- [x] Pantalla de resultado (tu tiempo, posición, tiempos de los rivales)
 - [x] Cámara diagonal que sigue al jugador
 - [x] Pista con carriles, graderío y césped en perspectiva
 
@@ -495,5 +495,22 @@ clavado a lo que predice la tabla. La simulación asume cadencia perfecta y cons
 jugando de verdad hay fluctuación, así que la exigencia real es mayor. Ajustar con el
 panel de calibración (`F2`) si al jugar la curva se siente dura o blanda.
 
-**Próximo paso:** playtest de la sensación y, si convence, Semana 3-4 (secuencia de
-salida sin descalificación y rivales de velocidad constante en sus carriles).
+### Ángulo de la pista
+
+Medido sobre una captura del original: las líneas de carril bajan hacia la derecha
+con pendiente **0.24** y la línea de salida sube con pendiente **-0.57**. Las dos
+salen de la misma proyección: guiñada -33° y eje vertical comprimido a 0.37.
+El césped queda pegado al carril 1 y el graderío tras el carril 8.
+
+Las constantes viven en `src/render/Track.js`. `SCALE` es el zoom: subirlo acerca
+la cámara y se ve menos pista por delante.
+
+### Semana 3-4 verificada
+
+Las 8 categorías con rivales se comprobaron por simulación. Cadencia necesaria
+para ganar: 6 puls/s basta para Niños, 8 llega hasta National Sport Festival,
+10 hasta Cyborg y 12 gana a God Velocity.
+
+**Próximo paso:** Semana 5-6 — progresión y desbloqueo de categorías, menú
+principal y el replay del fantasma para el nivel 9. Ahora mismo las categorías se
+eligen con las teclas 1-9, que es provisional hasta que haya menú.

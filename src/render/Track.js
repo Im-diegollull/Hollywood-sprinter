@@ -11,21 +11,23 @@ const LANES = 8;
 const PLAYER_LANE = 3;
 
 // Matriz de proyección (metros/carriles -> píxeles)
-// La pista baja hacia la derecha, así que los carriles se apilan hacia
-// abajo-izquierda para quedar aproximadamente perpendiculares en pantalla.
-const PPM = 22;           // px por metro a lo largo de la pista
-const TRACK_RISE = 0.22;  // px verticales por px avanzado (positivo = baja)
-const LANE_H = 26;        // px verticales por carril
-const LANE_SHEAR = -0.5;  // px horizontales por px vertical de carril
+// Ángulos medidos sobre una captura del original: la pista baja hacia la
+// derecha con pendiente 0.24 y la línea de salida sube con pendiente -0.57.
+// Equivale a mirar el plano con guiñada -33° y el eje vertical comprimido
+// a 0.37, así que ambas direcciones salen de la misma proyección.
+const TRACK_DIR = { x: 0.840, y: 0.201 };  // avance, por metro
+const LANE_DIR = { x: 0.543, y: -0.311 };  // hacia carriles exteriores, por metro
+const LANE_WIDTH = 1.22;  // metros, medida oficial de atletismo
+const SCALE = 72;         // px por metro. Sube para acercar la cámara
 
-const A = PPM;
-const B = PPM * TRACK_RISE;
-const C = LANE_H * LANE_SHEAR;
-const D = LANE_H;
+const A = TRACK_DIR.x * SCALE;
+const B = TRACK_DIR.y * SCALE;
+const C = LANE_DIR.x * SCALE * LANE_WIDTH;
+const D = LANE_DIR.y * SCALE * LANE_WIDTH;
 
 // Dónde se ancla el corredor del jugador en pantalla
-const PLAYER_SX = 330;
-const PLAYER_SY = 300;
+const PLAYER_SX = 280;
+const PLAYER_SY = 250;
 
 const DRAW_BEHIND = 40;   // metros de pista dibujados por detrás
 const DRAW_AHEAD = 60;    // y por delante
@@ -79,16 +81,16 @@ class Track {
 
     this.pushTransform(ctx);
 
-    // Graderío al otro lado de la pista, con su franja exterior pegada al tartán
-    ctx.fillStyle = COLORS.stands;
+    // Césped interior, pegado al carril 1
+    ctx.fillStyle = COLORS.grass;
     ctx.fillRect(from, -30, span, 30);
+
+    // Graderío tras el carril 8, con su franja exterior contra el tartán
+    ctx.fillStyle = COLORS.stands;
+    ctx.fillRect(from, LANES + 1.1, span, 30);
     this.drawCrowd(ctx, from, span);
     ctx.fillStyle = COLORS.outside;
-    ctx.fillRect(from, -1.1, span, 1.1);
-
-    // Césped interior, sin hueco contra la pista
-    ctx.fillStyle = COLORS.grass;
-    ctx.fillRect(from, LANES, span, 30);
+    ctx.fillRect(from, LANES, span, 1.1);
 
     // Pista
     ctx.fillStyle = COLORS.track;
@@ -119,7 +121,7 @@ class Track {
         const h = Math.abs(Math.sin((x * 12.9898 + row * 78.233) * 43758.5453));
         const shade = 60 + Math.floor(h * 150);
         ctx.fillStyle = `rgb(${shade}, ${shade - 14}, ${shade + 25})`;
-        ctx.fillRect(x + (row % 2) * 0.35, -1.9 - row * 0.85, 0.34, 0.4);
+        ctx.fillRect(x + (row % 2) * 0.35, LANES + 1.5 + row * 0.85, 0.34, 0.4);
       }
     }
   }
@@ -165,7 +167,7 @@ class Track {
 
     for (let m = Math.max(Math.ceil(from / 10) * 10, 0); m <= Math.min(to, this.raceDistance); m += 10) {
       if (m === 0) continue;
-      const p = this.project(m, LANES + 1.1);
+      const p = this.project(m, -1.0);
       if (p.x < -40 || p.x > viewWidth + 40 || p.y < -20 || p.y > viewHeight + 20) continue;
       ctx.fillStyle = COLORS.label;
       ctx.fillText(m === this.raceDistance ? 'META' : `${m}`, p.x, p.y);
@@ -175,4 +177,4 @@ class Track {
   }
 }
 
-export { Track, LANES, PLAYER_LANE, PPM };
+export { Track, LANES, PLAYER_LANE, TRACK_DIR };

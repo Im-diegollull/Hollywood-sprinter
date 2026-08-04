@@ -21,6 +21,7 @@ class Input {
     this.onConfirm = null;      // () => void   Espacio / Enter / tap
     this.onRestart = null;      // () => void   R
     this.onToggleDebug = null;  // () => void   F2
+    this.onSelectLevel = null;  // (id: 1..9) => void   teclas numéricas
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onPointerDown = this._onPointerDown.bind(this);
@@ -37,6 +38,12 @@ class Input {
     if (side) {
       e.preventDefault();
       this.onPress?.(side);
+      return;
+    }
+
+    const digit = /^Digit([1-9])$/.exec(e.code);
+    if (digit) {
+      this.onSelectLevel?.(Number(digit[1]));
       return;
     }
 
