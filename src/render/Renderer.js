@@ -9,7 +9,7 @@ const STRIDE_LENGTH = 2.0;   // metros por zancada completa
 // brazos para balancearse a lo largo de la pista y no en horizontal.
 const DIR = (() => {
   const x = 1;
-  const y = -0.22;
+  const y = 0.22;
   const len = Math.hypot(x, y);
   return { x: x / len, y: y / len };
 })();

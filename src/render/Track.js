@@ -11,10 +11,12 @@ const LANES = 8;
 const PLAYER_LANE = 3;
 
 // Matriz de proyección (metros/carriles -> píxeles)
+// La pista baja hacia la derecha, así que los carriles se apilan hacia
+// abajo-izquierda para quedar aproximadamente perpendiculares en pantalla.
 const PPM = 22;           // px por metro a lo largo de la pista
-const TRACK_RISE = -0.22; // px verticales por px avanzado
+const TRACK_RISE = 0.22;  // px verticales por px avanzado (positivo = baja)
 const LANE_H = 26;        // px verticales por carril
-const LANE_SHEAR = 0.5;   // px horizontales por px vertical de carril
+const LANE_SHEAR = -0.5;  // px horizontales por px vertical de carril
 
 const A = PPM;
 const B = PPM * TRACK_RISE;
@@ -112,7 +114,7 @@ class Track {
     const step = 0.7;
     const start = Math.floor(from / step) * step;
     for (let x = start; x < from + span; x += step) {
-      for (let row = 0; row < 5; row++) {
+      for (let row = 0; row < 16; row++) {
         // hash estable: la grada no parpadea al hacer scroll
         const h = Math.abs(Math.sin((x * 12.9898 + row * 78.233) * 43758.5453));
         const shade = 60 + Math.floor(h * 150);
