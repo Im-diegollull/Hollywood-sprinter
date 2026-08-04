@@ -14,11 +14,15 @@ const LEVELS = [
   { id: 9, name: 'Yourself',                 ghost: true,                    runners: 1 },
 ];
 
-const GHOST_FALLBACK = 7.50; // si aún no hay récord propio, corre God Velocity
+const GHOST_FALLBACK = 7.50; // si aún no hay replay propio, corre God Velocity
+
+// Contrarreloj: solo tú y el cronómetro, sin categoría ni rivales.
+const TIME_TRIAL = { id: 0, name: 'Contrarreloj', runners: 0 };
 
 /** Reparte los tiempos de los rivales dentro del rango de la categoría. */
 function generateRivalTimes(level, bestTime = null) {
   if (level.ghost) return [bestTime ?? GHOST_FALLBACK];
+  if (!level.runners) return [];
 
   const times = [];
   for (let i = 0; i < level.runners; i++) {
@@ -34,4 +38,4 @@ function getLevel(id) {
   return LEVELS.find((level) => level.id === id) ?? LEVELS[0];
 }
 
-export { LEVELS, generateRivalTimes, getLevel, GHOST_FALLBACK };
+export { LEVELS, generateRivalTimes, getLevel, GHOST_FALLBACK, TIME_TRIAL };

@@ -1,10 +1,12 @@
 import { Runner } from './Runner.js';
 import { Rival } from './Rival.js';
+import { Ghost } from './Ghost.js';
 import { generateRivalTimes } from '../data/levels.js';
 
 const RACE_DISTANCE = 100; // metros
 const LANE_COUNT = 8;
 const PLAYER_LANE = 3;
+const SAMPLE_INTERVAL = 0.04; // s entre muestras del replay
 
 const STATE = {
   IDLE: 'idle',
@@ -24,21 +26,37 @@ const SET_PHASES = [
  * Estado de una carrera de 100 m lisos contra los rivales de una categoría.
  */
 class Race {
-  constructor(level, bestTime = null) {
+  constructor(level, ghost = null) {
     this.distance = RACE_DISTANCE;
     this.runner = new Runner(PLAYER_LANE);
-    this.setLevel(level, bestTime);
+    this.setLevel(level, ghost);
   }
 
-  setLevel(level, bestTime = null) {
+  /**
+   * @param {object} level categoría de data/levels.js
+   * @param {{samples: number[], time: number} | null} ghost replay guardado,
+   *        solo lo usa el nivel 9
+   */
+  setLevel(level, ghost = null) {
     this.level = level;
-    const times = generateRivalTimes(level, bestTime);
     const lanes = [];
     for (let lane = 0; lane < LANE_COUNT; lane++) {
       if (lane !== PLAYER_LANE) lanes.push(lane);
     }
+    const ghostLane = PLAYER_LANE + 1;
 
-    this.rivals = times.map((time, i) => new Rival(time, lanes[i % lanes.length], `Carril ${lanes[i % lanes.length] + 1}`));
+    if (level.ghost && ghost) {
+      this.rivals = [new Ghost(ghost.samples, ghost.time, ghostLane)];
+    } else {
+      // Sin replay guardado, el nivel 9 cae en God Velocity a ritmo constante
+      const times = generateRivalTimes(level);
+      this.rivals = times.map((time, i) => {
+        const lane = level.ghost ? ghostLane : lanes[i % lanes.length];
+        const name = level.ghost ? 'GOD VELOCITY' : `Carril ${lane + 1}`;
+        return new Rival(time, lane, name);
+      });
+    }
+
     this.reset();
   }
 
@@ -51,6 +69,8 @@ class Race {
     this.runner.reset();
     this.rivals.forEach((rival) => rival.reset());
     this.standings = null;
+    this.replay = [];       // [t0, x0, t1, x1, ...] para el fantasma
+    this.nextSample = 0;
   }
 
   /** Arranca la secuencia de salida. */
@@ -102,13 +122,22 @@ class Race {
     this.time += dt;
     this.runner.update(dt, this.time);
     this.rivals.forEach((rival) => rival.update(dt, this.time, this.distance));
+    this.sampleReplay();
 
     if (this.runner.distance >= this.distance) {
       this.runner.finish(this.distance, this.time);
       this.time = this.runner.finishTime;
+      this.replay.push(this.time, this.distance);
       this.state = STATE.FINISHED;
       this.standings = this.buildStandings();
     }
+  }
+
+  /** Graba la posición cada SAMPLE_INTERVAL para poder repetirla en el nivel 9. */
+  sampleReplay() {
+    if (this.time < this.nextSample) return;
+    this.replay.push(this.time, this.runner.distance);
+    this.nextSample = this.time + SAMPLE_INTERVAL;
   }
 
   /**
@@ -120,7 +149,7 @@ class Race {
       { name: 'TÚ', time: this.runner.finishTime, lane: this.runner.lane, isPlayer: true },
       ...this.rivals.map((rival) => ({
         name: rival.name,
-        time: this.distance / rival.speed,
+        time: rival.expectedTime,
         lane: rival.lane,
         isPlayer: false,
       })),
@@ -148,7 +177,12 @@ class Race {
   }
 
   get won() {
-    return this.playerPosition === 1;
+    return this.rivals.length > 0 && this.playerPosition === 1;
+  }
+
+  /** El contrarreloj no tiene rivales: no se gana ni se pierde, se cronometra. */
+  get isTimeTrial() {
+    return this.rivals.length === 0;
   }
 
   get isRunning() {

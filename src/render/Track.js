@@ -72,7 +72,8 @@ class Track {
     ctx.transform(A, B, C, D, this.e, this.f);
   }
 
-  draw(ctx, viewWidth, viewHeight) {
+  /** @param {{labels?: boolean}} options el menú usa la pista sin numeración */
+  draw(ctx, viewWidth, viewHeight, { labels = true } = {}) {
     const from = this.focus - DRAW_BEHIND;
     const span = DRAW_BEHIND + DRAW_AHEAD;
 
@@ -109,7 +110,7 @@ class Track {
     this.drawDistanceLines(ctx, from, span);
     ctx.restore();
 
-    this.drawLabels(ctx, viewWidth, viewHeight);
+    if (labels) this.drawLabels(ctx, viewWidth, viewHeight);
   }
 
   drawCrowd(ctx, from, span) {

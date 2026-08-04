@@ -19,9 +19,10 @@ class Input {
     this.target = target;
     this.onPress = null;        // (side: 'left' | 'right') => void
     this.onConfirm = null;      // () => void   Espacio / Enter / tap
+    this.onNavigate = null;     // (delta: -1 | 1) => void   arriba / abajo
+    this.onBack = null;         // () => void   Escape
     this.onRestart = null;      // () => void   R
     this.onToggleDebug = null;  // () => void   F2
-    this.onSelectLevel = null;  // (id: 1..9) => void   teclas numéricas
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onPointerDown = this._onPointerDown.bind(this);
@@ -41,13 +42,20 @@ class Input {
       return;
     }
 
-    const digit = /^Digit([1-9])$/.exec(e.code);
-    if (digit) {
-      this.onSelectLevel?.(Number(digit[1]));
-      return;
-    }
-
     switch (e.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        e.preventDefault();
+        this.onNavigate?.(-1);
+        break;
+      case 'ArrowDown':
+      case 'KeyS':
+        e.preventDefault();
+        this.onNavigate?.(1);
+        break;
+      case 'Escape':
+        this.onBack?.();
+        break;
       case 'Space':
       case 'Enter':
         e.preventDefault();

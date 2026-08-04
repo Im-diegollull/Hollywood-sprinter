@@ -21,6 +21,11 @@ class Rival {
     this.finishTime = null;
   }
 
+  /** A velocidad constante el tiempo de llegada se sabe desde la salida. */
+  get expectedTime() {
+    return this.targetTime;
+  }
+
   update(dt, time, raceDistance) {
     if (this.finished) return;
 

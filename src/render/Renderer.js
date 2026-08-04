@@ -88,6 +88,81 @@ class Renderer {
   }
 
   /**
+   * Menú principal y selector de categoría, sobre la pista como fondo.
+   * @param {object} menu instancia de ui/Menu
+   * @param {(levelId: number) => number|null} recordFor récord por categoría
+   */
+  drawMenu(menu, recordFor) {
+    const { ctx } = this;
+
+    this.track.follow(24, 3);
+    this.track.draw(ctx, VIEW_WIDTH, VIEW_HEIGHT, { labels: false });
+
+    ctx.fillStyle = 'rgba(10, 14, 18, 0.74)';
+    ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 52px ui-monospace, monospace';
+    ctx.fillText('SPRINTER', VIEW_WIDTH / 2, 96);
+
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '12px ui-monospace, monospace';
+    ctx.fillText(
+      menu.screen === 'main' ? 'Alterna ← → lo más rápido que puedas' : 'Gana una categoría para desbloquear la siguiente',
+      VIEW_WIDTH / 2,
+      120
+    );
+
+    const items = menu.items;
+    const rowHeight = 38;
+    const width = 520;
+    const x = (VIEW_WIDTH - width) / 2;
+    const top = 168;
+
+    items.forEach((item, i) => {
+      const y = top + i * rowHeight;
+      const active = i === menu.index;
+      const locked = Boolean(item.locked);
+
+      if (active) {
+        ctx.fillStyle = 'rgba(255, 209, 102, 0.14)';
+        ctx.beginPath();
+        ctx.roundRect(x, y - 22, width, 32, 6);
+        ctx.fill();
+      }
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = locked ? '#5c6b7a' : active ? COLORS.accent : COLORS.text;
+      ctx.font = `${active ? 'bold ' : ''}17px ui-monospace, monospace`;
+      ctx.fillText(`${active ? '▸ ' : '  '}${item.label}`, x + 18, y);
+
+      ctx.textAlign = 'right';
+      ctx.font = '13px ui-monospace, monospace';
+      if (locked) {
+        ctx.fillStyle = '#5c6b7a';
+        ctx.fillText('BLOQUEADA', x + width - 18, y);
+      } else if (item.level) {
+        const record = recordFor(item.level.id);
+        ctx.fillStyle = record ? COLORS.accent : COLORS.textDim;
+        ctx.fillText(record ? `${record.toFixed(2)} s` : '—', x + width - 18, y);
+      } else {
+        ctx.fillStyle = COLORS.textDim;
+        ctx.fillText(item.hint ?? '', x + width - 18, y);
+      }
+    });
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '11px ui-monospace, monospace';
+    ctx.fillText(
+      '↑ ↓ para elegir  ·  ENTER para empezar  ·  ESC para volver',
+      VIEW_WIDTH / 2,
+      VIEW_HEIGHT - 34
+    );
+  }
+
+  /**
    * Corredor de espaldas. Geometría provisional: la animación por sprites
    * llega en la semana 7-8, pero el ciclo ya va atado a la distancia.
    */
@@ -203,7 +278,10 @@ class Renderer {
     ctx.textAlign = 'right';
     ctx.fillStyle = COLORS.accent;
     ctx.font = 'bold 16px ui-monospace, monospace';
-    ctx.fillText(`${race.level.id}. ${race.level.name.toUpperCase()}`, VIEW_WIDTH - 28, 48);
+    const title = race.isTimeTrial
+      ? race.level.name.toUpperCase()
+      : `${race.level.id}. ${race.level.name.toUpperCase()}`;
+    ctx.fillText(title, VIEW_WIDTH - 28, 48);
     ctx.fillStyle = COLORS.textDim;
     ctx.font = '11px ui-monospace, monospace';
     const best = stats.best ? `${stats.best.toFixed(2)} s` : '—';
@@ -211,7 +289,7 @@ class Renderer {
 
     ctx.textAlign = 'center';
     if (race.state === 'idle') {
-      this.drawBanner('ALTERNA ← →  PARA CORRER', 'Teclas 1-9 cambian de categoría');
+      this.drawBanner('ALTERNA ← →  PARA CORRER', 'ESC para volver al menú');
     } else if (race.state === 'set') {
       this.drawStartCall(race.setPhase);
     } else if (race.isFinished) {
@@ -235,8 +313,9 @@ class Renderer {
   drawResults(race, stats) {
     const { ctx } = this;
     const rows = race.standings;
+    const unlockOffset = stats.unlocked ? 20 : 0;
     const width = 460;
-    const height = 108 + rows.length * 26;
+    const height = 108 + unlockOffset + rows.length * 26;
     const x = (VIEW_WIDTH - width) / 2;
     const y = (VIEW_HEIGHT - height) / 2;
 
@@ -246,20 +325,29 @@ class Renderer {
     ctx.fill();
 
     const won = race.won;
-    ctx.fillStyle = won ? COLORS.accent : COLORS.text;
-    ctx.font = 'bold 30px ui-monospace, monospace';
-    ctx.fillText(won ? '¡GANASTE!' : `${race.playerPosition}º PUESTO`, VIEW_WIDTH / 2, y + 46);
+    let title = `${race.playerPosition}º PUESTO`;
+    if (race.isTimeTrial) title = `${race.time.toFixed(2)} s`;
+    else if (won) title = '¡GANASTE!';
 
+    ctx.fillStyle = won || race.isTimeTrial ? COLORS.accent : COLORS.text;
+    ctx.font = 'bold 30px ui-monospace, monospace';
+    ctx.fillText(title, VIEW_WIDTH / 2, y + 46);
+
+    const subtitle = race.isTimeTrial
+      ? (stats.isRecord ? 'NUEVO RÉCORD' : 'Tu mejor tiempo sigue en pie')
+      : `${race.time.toFixed(2)} s${stats.isRecord ? '  ·  RÉCORD DE LA CATEGORÍA' : ''}`;
     ctx.fillStyle = COLORS.textDim;
     ctx.font = '12px ui-monospace, monospace';
-    ctx.fillText(
-      stats.isRecord ? `${race.time.toFixed(2)} s · RÉCORD DE LA CATEGORÍA` : `${race.time.toFixed(2)} s`,
-      VIEW_WIDTH / 2,
-      y + 68
-    );
+    ctx.fillText(subtitle, VIEW_WIDTH / 2, y + 68);
+
+    if (stats.unlocked) {
+      ctx.fillStyle = COLORS.accent;
+      ctx.font = 'bold 12px ui-monospace, monospace';
+      ctx.fillText(`DESBLOQUEADA: ${stats.unlocked}`, VIEW_WIDTH / 2, y + 88);
+    }
 
     rows.forEach((row, i) => {
-      const rowY = y + 100 + i * 26;
+      const rowY = y + 100 + unlockOffset + i * 26;
       ctx.textAlign = 'left';
       ctx.fillStyle = row.isPlayer ? COLORS.accent : COLORS.textDim;
       ctx.font = `${row.isPlayer ? 'bold ' : ''}14px ui-monospace, monospace`;
@@ -272,7 +360,7 @@ class Renderer {
     ctx.textAlign = 'center';
     ctx.fillStyle = COLORS.textDim;
     ctx.font = '11px ui-monospace, monospace';
-    ctx.fillText('R para repetir  ·  F2 para calibrar', VIEW_WIDTH / 2, y + height - 14);
+    ctx.fillText('R para repetir  ·  ESC para el menú', VIEW_WIDTH / 2, y + height - 14);
   }
 
   drawBanner(title, subtitle) {

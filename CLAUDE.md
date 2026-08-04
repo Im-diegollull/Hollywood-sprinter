@@ -358,13 +358,13 @@ sprinter-remake/
 ### Semana 5-6 — Contenido y progresión
 **Objetivo:** el juego completo.
 
-- [ ] Las 9 categorías con sus tiempos reales
-- [ ] Progresión: ganar desbloquea la siguiente categoría
-- [ ] Guardado en localStorage (nivel alcanzado, récords por categoría)
-- [ ] Grabación del replay para el nivel 9 (Yourself)
-- [ ] Nivel 9 funcionando con el fantasma
-- [ ] Menú principal + selector de categoría
-- [ ] Modo contrarreloj
+- [x] Las 9 categorías con sus tiempos reales
+- [x] Progresión: ganar desbloquea la siguiente categoría
+- [x] Guardado en localStorage (nivel alcanzado, récords por categoría)
+- [x] Grabación del replay para el nivel 9 (Yourself)
+- [x] Nivel 9 funcionando con el fantasma
+- [x] Menú principal + selector de categoría
+- [x] Modo contrarreloj
 
 **Milestone:** juego completo de principio a fin.
 
@@ -511,6 +511,21 @@ Las 8 categorías con rivales se comprobaron por simulación. Cadencia necesaria
 para ganar: 6 puls/s basta para Niños, 8 llega hasta National Sport Festival,
 10 hasta Cyborg y 12 gana a God Velocity.
 
-**Próximo paso:** Semana 5-6 — progresión y desbloqueo de categorías, menú
-principal y el replay del fantasma para el nivel 9. Ahora mismo las categorías se
-eligen con las teclas 1-9, que es provisional hasta que haya menú.
+### Semana 5-6 verificada
+
+- **Progresión:** ganar una categoría desbloquea la siguiente. Solo la 1 empieza
+  abierta. El desbloqueo no retrocede aunque vuelvas a ganar una anterior.
+- **Fantasma:** el replay se graba cada 0.04 s en un array plano `[t, x, t, x…]`
+  y solo se guarda cuando bates tu récord de God Velocity. Se comprobó que el
+  fantasma sí acelera (0.5 m al medio segundo, 30 m a los 3 s), que es lo que lo
+  distingue de un rival normal. Sin replay guardado, el nivel 9 cae en God
+  Velocity a 7.50 s.
+- **Contrarreloj:** carrera sin rivales. No se gana ni se pierde, solo cronometra.
+
+**Claves de localStorage:** `sprinter:records` (récord por categoría),
+`sprinter:progress` (categoría más alta desbloqueada), `sprinter:ghost` (replay).
+
+**Próximo paso:** Semana 7-8 — sprites del corredor, música por categoría,
+SFX, táctil y deploy. El corredor sigue siendo geometría provisional; el ciclo
+de zancada ya va atado a la distancia, así que los sprites entran sin tocar la
+lógica.
