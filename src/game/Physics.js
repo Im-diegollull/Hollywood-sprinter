@@ -7,9 +7,7 @@ const DEFAULT_TUNING = {
   // Con 1.4, batir a God Velocity (7.50 s) exige ~11.3 pulsaciones/s sostenidas.
   SPEED_PER_CADENCE: 1.4,   // m/s por pulsación/segundo
   DECAY_RATE: 8.0,          // m/s² — desaceleración al dejar de pulsar
-  CADENCE_SMOOTHING: 0.15,  // 0-1, cuánto pesa cada pulsación nueva
-  CADENCE_DECAY: 2.2,       // 1/s — caída exponencial de la cadencia en pausa
-  CADENCE_IDLE_GRACE: 0.3,  // s sin pulsar antes de empezar a perder cadencia
+  GAP_SMOOTHING: 0.25,      // 0-1, cuánto pesa el hueco de cada pulsación
   ACCEL_START: 6.0,         // m/s² — fase de arranque (crea la desventaja inicial)
   ACCEL_MAIN: 10.0,         // m/s² — a partir de ACCEL_THRESHOLD
   ACCEL_THRESHOLD: 5.0,     // m/s — dónde termina la fase de arranque
@@ -32,23 +30,29 @@ function resetTuning() {
 }
 
 /**
- * Cadencia (pulsaciones/s) suavizada tras una pulsación válida.
+ * Media suavizada del hueco entre pulsaciones, en segundos.
  *
- * El hueco se limita por abajo a MIN_KEY_GAP. Sin ese tope, dos teclas
- * separadas por milisegundos daban cadencias de 300/s y disparaban la
- * velocidad; era posible hacer 100 m en menos de 5 s aporreando las dos
- * teclas cuatro veces por segundo.
+ * Se promedia el HUECO y no la cadencia. Promediar `1/hueco` está sesgado al
+ * alza porque esa función es convexa: con huecos de 40 ms y 300 ms la media de
+ * `1/hueco` da 11.2 puls/s cuando en realidad se pulsa a 5.9. Cualquier
+ * irregularidad humana inflaba la velocidad, y pulsando despacio salían
+ * tiempos de 7 s. Promediar el hueco y luego invertir da la cadencia real.
  */
-function smoothCadence(cadence, gap) {
-  if (gap <= 0 || gap >= TUNING.MAX_KEY_GAP) return cadence;
-  const instant = 1 / Math.max(gap, TUNING.MIN_KEY_GAP);
-  return cadence + (instant - cadence) * TUNING.CADENCE_SMOOTHING;
+function smoothGap(avgGap, gap) {
+  const clamped = Math.min(Math.max(gap, TUNING.MIN_KEY_GAP), TUNING.MAX_KEY_GAP);
+  if (avgGap <= 0) return clamped;
+  return avgGap + (clamped - avgGap) * TUNING.GAP_SMOOTHING;
 }
 
-/** Caída de cadencia cuando no se pulsa. Independiente del framerate. */
-function decayCadence(cadence, timeSinceKey, dt) {
-  if (timeSinceKey <= TUNING.CADENCE_IDLE_GRACE) return cadence;
-  return cadence * Math.exp(-TUNING.CADENCE_DECAY * dt);
+/**
+ * Cadencia actual en pulsaciones por segundo.
+ *
+ * Si llevas más tiempo sin pulsar que tu propio ritmo, manda ese silencio: la
+ * cadencia cae sola sin necesidad de una constante de decaimiento aparte.
+ */
+function cadenceFrom(avgGap, timeSinceKey) {
+  if (avgGap <= 0) return 0;
+  return 1 / Math.max(avgGap, timeSinceKey);
 }
 
 /** Velocidad a la que tiende el corredor con la cadencia actual. Sin techo. */
@@ -69,8 +73,8 @@ export {
   TUNING,
   DEFAULT_TUNING,
   resetTuning,
-  smoothCadence,
-  decayCadence,
+  smoothGap,
+  cadenceFrom,
   targetSpeedFor,
   approachSpeed,
 };

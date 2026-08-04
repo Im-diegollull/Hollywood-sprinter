@@ -142,21 +142,29 @@ const CADENCE_SMOOTHING = 0.15;
 4. Aceleración limitada al inicio — simula la fase de arranque real de un sprint.
    Esto es lo que crea la desventaja inicial frente a los rivales.
 
+⚠️ **Promediar el hueco, nunca la cadencia.** `1/hueco` es convexa, así que
+promediarla está sesgado al alza: con huecos de 40 ms y 300 ms la media de
+`1/hueco` da 11.2 puls/s cuando en realidad se pulsa a 5.9. El ritmo natural
+de dos dedos (par rápido + pausa) dispara ese sesgo y hacía 100 m en 8 s
+pulsando a 6.5 puls/s. Se promedia el hueco y se invierte al final.
+
 ```javascript
-function onKeyPress(key) {
+function onKeyPress(key, eventTime) {
   if (key === lastKey) return;        // misma tecla = no cuenta
 
-  const now = performance.now();
-  const delta = (now - lastKeyTime) / 1000;
+  const gap = eventTime - lastKeyTime;
+  if (gap < STUMBLE_GAP) return fall(); // las dos teclas a la vez: al suelo
 
-  if (delta > 0 && delta < 1.0) {
-    const instantCadence = 1 / delta;
-    cadence += (instantCadence - cadence) * CADENCE_SMOOTHING;
-  }
+  const clamped = Math.min(Math.max(gap, MIN_KEY_GAP), MAX_KEY_GAP);
+  avgGap += (clamped - avgGap) * GAP_SMOOTHING;
 
   lastKey = key;
-  lastKeyTime = now;
+  lastKeyTime = eventTime;
 }
+
+// Si llevas más sin pulsar que tu propio ritmo, manda el silencio y la
+// cadencia cae sola: no hace falta constante de decaimiento aparte.
+const cadence = 1 / Math.max(avgGap, timeSinceLastKey);
 
 function update(dt) {
   const timeSinceKey = (performance.now() - lastKeyTime) / 1000;

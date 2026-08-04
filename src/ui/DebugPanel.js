@@ -7,8 +7,7 @@ const CONTROLS = [
   ['ACCEL_MAIN', 4, 25, 0.1],
   ['ACCEL_THRESHOLD', 0, 12, 0.5],
   ['DECAY_RATE', 2, 20, 0.1],
-  ['CADENCE_SMOOTHING', 0.02, 0.6, 0.01],
-  ['CADENCE_DECAY', 0.5, 8, 0.1],
+  ['GAP_SMOOTHING', 0.05, 0.8, 0.01],
 ];
 
 /**

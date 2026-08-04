@@ -157,13 +157,13 @@ class Track {
    * deformados con la misma perspectiva, como pintura sobre el suelo.
    */
   drawLaneNumbers(ctx, viewWidth, viewHeight) {
-    const at = -2.4; // metros antes de la salida: quedan detrás del corredor
+    const at = -1.5; // metros antes de la salida: quedan detrás del corredor
     const anchor = this.project(at, LANES / 2);
     if (anchor.x < -300 || anchor.x > viewWidth + 300) return;
 
     for (let lane = 0; lane < LANES; lane++) {
       this.pushTransform(ctx);
-      ctx.translate(at, lane + 0.75);
+      ctx.translate(at, lane + 0.5);   // centrado en su carril
       // Hay que invertir los dos ejes del texto: en coordenadas de pista la
       // X apunta a la izquierda de la pantalla (se corre hacia allí) y la Y
       // de los carriles apunta hacia arriba. Sin esto los números salen
@@ -187,7 +187,7 @@ class Track {
 
     for (let m = Math.max(Math.ceil(from / 10) * 10, 0); m <= Math.min(to, this.raceDistance); m += 10) {
       if (m === 0) continue;
-      const p = this.project(m, -0.7);
+      const p = this.project(m, -1.1);   // sobre el césped, fuera del tartán
       if (p.x < -40 || p.x > viewWidth + 40 || p.y < -20 || p.y > viewHeight + 20) continue;
       ctx.fillStyle = COLORS.label;
       ctx.fillText(m === this.raceDistance ? 'META' : `${m}`, p.x, p.y);

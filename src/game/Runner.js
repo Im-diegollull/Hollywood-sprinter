@@ -1,7 +1,7 @@
 import {
   TUNING,
-  smoothCadence,
-  decayCadence,
+  smoothGap,
+  cadenceFrom,
   targetSpeedFor,
   approachSpeed,
 } from './Physics.js';
@@ -30,6 +30,7 @@ class Runner {
     this.distance = 0;
     this.speed = 0;
     this.cadence = 0;
+    this.avgGap = 0;      // media del hueco entre pulsaciones, en segundos
     this.lastKey = null;
     this.lastKeyTime = 0;
     this.strokes = 0;
@@ -60,7 +61,7 @@ class Runner {
     }
 
     if (this.lastKey !== null) {
-      this.cadence = smoothCadence(this.cadence, gap);
+      this.avgGap = smoothGap(this.avgGap, gap);
     }
 
     this.lastKey = key;
@@ -72,6 +73,7 @@ class Runner {
   fall(time) {
     this.fallTimer = TUNING.FALL_DURATION;
     this.cadence = 0;
+    this.avgGap = 0;
     this.lastKey = null;
     this.lastKeyTime = time;
     this.stumbles++;
@@ -90,7 +92,7 @@ class Runner {
       return;
     }
 
-    this.cadence = decayCadence(this.cadence, time - this.lastKeyTime, dt);
+    this.cadence = cadenceFrom(this.avgGap, time - this.lastKeyTime);
     this.targetSpeed = targetSpeedFor(this.cadence);
     this.speed = approachSpeed(this.speed, this.targetSpeed, dt);
     this.distance += this.speed * dt;
