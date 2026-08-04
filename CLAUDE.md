@@ -488,24 +488,24 @@ export { Runner };
 
 ### Calibración actual (simulada, cadencia constante y perfecta)
 
-Con `SPEED_PER_CADENCE = 1.4` y sin tope de velocidad, estas son las pulsaciones por
-segundo necesarias para batir al mejor rival de cada categoría:
+`SPEED_PER_CADENCE = 1.26` está calibrado para que **6 pulsaciones/s den 14.00 s**,
+justo el tiempo del mejor niño. Sin tope de velocidad, la escalera queda así:
 
-| Categoría | Tiempo | Puls/s |
+| Categoría | Tiempo | Puls/s para ganar |
 |---|---|---|
-| 1 Niños | 14.00 s | 5.6 |
-| 2 Physical Festival | 12.90 s | 6.1 |
-| 3 High School | 11.50 s | 6.9 |
-| 4 National Sport | 10.70 s | 7.4 |
-| 5 Olympics | 9.58 s | 8.4 |
-| 6 Cyborg | 9.00 s | 9.0 |
-| 7 Galaxy | 8.00 s | 10.4 |
-| 8 God Velocity | 7.50 s | 11.3 |
+| 1 Niños | 14.00 s | 6.0 |
+| 2 Physical Festival | 12.90 s | 6.6 |
+| 3 High School | 11.50 s | 7.5 |
+| 4 National Sport | 10.70 s | 8.1 |
+| 5 Olympics | 9.58 s | 9.2 |
+| 6 Cyborg | 9.00 s | 9.9 |
+| 7 Galaxy | 8.00 s | 11.5 |
+| 8 God Velocity | 7.50 s | 12.5 |
 
-Verificado en el navegador: alternando a ~11 puls/s el crono marcó **7.53 s**, casi
-clavado a lo que predice la tabla. La simulación asume cadencia perfecta y constante;
-jugando de verdad hay fluctuación, así que la exigencia real es mayor. Ajustar con el
-panel de calibración (`F2`) si al jugar la curva se siente dura o blanda.
+Con el estimador de cadencia corregido estos números son honestos: el tiempo ya no
+depende de lo irregular que se pulse. Pulsando a 6/s con temblores de ±0% a ±70%
+salen 13.9-14.0 s en los cuatro casos. Ajustar con el panel de calibración (`F2`)
+si la curva se siente dura o blanda.
 
 ### Ángulo de la pista
 

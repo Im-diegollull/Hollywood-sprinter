@@ -4,8 +4,9 @@
 // Constantes de calibración. Se ajustan en playtest desde el panel [D].
 const DEFAULT_TUNING = {
   // Sin tope de velocidad: el único límite es lo rápido que puedas alternar.
-  // Con 1.4, batir a God Velocity (7.50 s) exige ~11.3 pulsaciones/s sostenidas.
-  SPEED_PER_CADENCE: 1.4,   // m/s por pulsación/segundo
+  // Calibrado para que 6 pulsaciones/s den 14.00 s, el tiempo del mejor niño.
+  // Con eso batir a God Velocity (7.50 s) exige 12.5 puls/s sostenidas.
+  SPEED_PER_CADENCE: 1.26,  // m/s por pulsación/segundo
   DECAY_RATE: 8.0,          // m/s² — desaceleración al dejar de pulsar
   GAP_SMOOTHING: 0.25,      // 0-1, cuánto pesa el hueco de cada pulsación
   ACCEL_START: 6.0,         // m/s² — fase de arranque (crea la desventaja inicial)

@@ -163,7 +163,7 @@ class Track {
 
     for (let lane = 0; lane < LANES; lane++) {
       this.pushTransform(ctx);
-      ctx.translate(at, lane + 0.5);   // centrado en su carril
+      ctx.translate(at, lane + 0.25);  // bajo dentro de su carril
       // Hay que invertir los dos ejes del texto: en coordenadas de pista la
       // X apunta a la izquierda de la pantalla (se corre hacia allí) y la Y
       // de los carriles apunta hacia arriba. Sin esto los números salen
