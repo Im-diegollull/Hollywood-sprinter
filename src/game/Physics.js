@@ -14,6 +14,15 @@ const DEFAULT_TUNING = {
   ACCEL_MAIN: 10.0,         // m/s² — a partir de ACCEL_THRESHOLD
   ACCEL_THRESHOLD: 5.0,     // m/s — dónde termina la fase de arranque
   MAX_KEY_GAP: 1.0,         // s — un hueco mayor no cuenta como cadencia
+
+  // Dos pulsaciones más juntas que esto son las dos teclas a la vez, no una
+  // alternancia: el corredor tropieza. 25 ms equivalen a 40 pulsaciones/s.
+  // Medido: alternando a 16 puls/s con ±50% de temblor el hueco más corto
+  // fue de 32 ms, así que no salta con juego rápido pero sucio.
+  STUMBLE_GAP: 0.025,       // s
+  MIN_KEY_GAP: 0.05,        // s — techo de la cadencia instantánea (20/s)
+  FALL_DURATION: 1.1,       // s tirado en el suelo sin poder hacer nada
+  FALL_DECEL: 16.0,         // m/s² — frenazo al caer
 };
 
 const TUNING = { ...DEFAULT_TUNING };
@@ -22,10 +31,17 @@ function resetTuning() {
   Object.assign(TUNING, DEFAULT_TUNING);
 }
 
-/** Cadencia (pulsaciones/s) suavizada tras una pulsación válida. */
+/**
+ * Cadencia (pulsaciones/s) suavizada tras una pulsación válida.
+ *
+ * El hueco se limita por abajo a MIN_KEY_GAP. Sin ese tope, dos teclas
+ * separadas por milisegundos daban cadencias de 300/s y disparaban la
+ * velocidad; era posible hacer 100 m en menos de 5 s aporreando las dos
+ * teclas cuatro veces por segundo.
+ */
 function smoothCadence(cadence, gap) {
   if (gap <= 0 || gap >= TUNING.MAX_KEY_GAP) return cadence;
-  const instant = 1 / gap;
+  const instant = 1 / Math.max(gap, TUNING.MIN_KEY_GAP);
   return cadence + (instant - cadence) * TUNING.CADENCE_SMOOTHING;
 }
 

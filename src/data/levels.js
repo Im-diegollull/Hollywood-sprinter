@@ -3,13 +3,13 @@
  * `fastest` es el tiempo del mejor rival de la categoría, `slowest` el del peor.
  */
 const LEVELS = [
-  { id: 1, name: 'Niños',                    fastest: 14.00, slowest: 16.03, runners: 4 },
-  { id: 2, name: 'Physical Festival',        fastest: 12.90, slowest: 14.43, runners: 4 },
-  { id: 3, name: 'High School Competitions', fastest: 11.50, slowest: 13.12, runners: 5 },
-  { id: 4, name: 'National Sport Festival',  fastest: 10.70, slowest: 11.80, runners: 5 },
-  { id: 5, name: 'The Olympics',             fastest:  9.58, slowest: 10.70, runners: 6 },
-  { id: 6, name: 'Cyborg',                   fastest:  9.00, slowest:  9.68, runners: 6 },
-  { id: 7, name: 'Galaxy Athletes Meet',     fastest:  8.00, slowest:  9.00, runners: 6 },
+  { id: 1, name: 'Niños',                    fastest: 14.00, slowest: 16.03, runners: 7 },
+  { id: 2, name: 'Physical Festival',        fastest: 12.90, slowest: 14.43, runners: 7 },
+  { id: 3, name: 'High School Competitions', fastest: 11.50, slowest: 13.12, runners: 7 },
+  { id: 4, name: 'National Sport Festival',  fastest: 10.70, slowest: 11.80, runners: 7 },
+  { id: 5, name: 'The Olympics',             fastest:  9.58, slowest: 10.70, runners: 7 },
+  { id: 6, name: 'Cyborg',                   fastest:  9.00, slowest:  9.68, runners: 7 },
+  { id: 7, name: 'Galaxy Athletes Meet',     fastest:  8.00, slowest:  9.00, runners: 7 },
   { id: 8, name: 'God Velocity',             fastest:  7.50, slowest:  7.50, runners: 1 },
   { id: 9, name: 'Yourself',                 ghost: true,                    runners: 1 },
 ];

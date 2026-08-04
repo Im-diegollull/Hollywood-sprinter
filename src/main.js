@@ -70,9 +70,9 @@ function onFinish(now) {
   }
 }
 
-input.onPress = (side) => {
+input.onPress = (side, clock) => {
   if (screen !== SCREEN.RACE || race.isFinished) return;
-  race.press(side);
+  race.press(side, clock);
 };
 
 input.onNavigate = (delta) => {
@@ -111,7 +111,7 @@ function loop(now) {
     renderer.drawMenu(menu, (id) => getBest(`categoria-${id}`));
   } else {
     const wasRunning = race.isRunning;
-    race.update(dt);
+    race.update(dt, now / 1000);
     if (wasRunning && race.isFinished) onFinish(now);
     renderer.draw(race, stats);
   }

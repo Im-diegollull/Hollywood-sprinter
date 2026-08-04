@@ -80,13 +80,19 @@ class Race {
     this.setTimer = 0;
   }
 
-  press(side) {
+  /**
+   * @param {string} side 'left' | 'right'
+   * @param {number} clock segundos de reloj real, no del cronómetro. Los
+   *        eventos de teclado caen entre frames y el cronómetro solo avanza
+   *        una vez por frame, así que usarlo falsearía los huecos.
+   */
+  press(side, clock) {
     if (this.state === STATE.IDLE) {
       this.begin();
       return;
     }
     if (this.state !== STATE.RUNNING) return; // antes del disparo no cuenta
-    this.runner.press(side, this.time);
+    this.runner.press(side, clock);
   }
 
   /** Fase actual de la salida, o null si la carrera no está en la salida. */
@@ -106,13 +112,13 @@ class Race {
     return SET_PHASES[0].duration + SET_PHASES[1].duration + this.readyExtra;
   }
 
-  update(dt) {
+  update(dt, clock) {
     if (this.state === STATE.SET) {
       this.setTimer += dt;
       if (this.setTimer >= this.gunTime) {
         this.state = STATE.RUNNING;
         this.time = 0;
-        this.runner.lastKeyTime = 0;
+        this.runner.lastKeyTime = clock;
       }
       return;
     }
@@ -120,7 +126,7 @@ class Race {
     if (this.state !== STATE.RUNNING) return;
 
     this.time += dt;
-    this.runner.update(dt, this.time);
+    this.runner.update(dt, clock);
     this.rivals.forEach((rival) => rival.update(dt, this.time, this.distance));
     this.sampleReplay();
 

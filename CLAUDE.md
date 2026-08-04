@@ -132,6 +132,10 @@ const CADENCE_SMOOTHING = 0.15;
 
 1. Solo cuenta la pulsación si es **la tecla contraria** a la anterior.
    Machacar la misma tecla no hace nada — eso es lo que da la mecánica de alternar.
+1b. **Las dos teclas a la vez = caída.** Dos pulsaciones separadas por menos de
+   25 ms no son una alternancia: el corredor se va al suelo y pierde 1.1 s sin
+   poder hacer nada. Sin esta regla, aporrear las dos teclas cuatro veces por
+   segundo hacía los 100 m en 4.82 s.
 2. La velocidad objetivo depende de la **cadencia** (pulsaciones/segundo), no de sumar
    velocidad por cada pulsación.
 3. Si dejas de pulsar, la velocidad decae. No puedes coastear.
@@ -525,7 +529,28 @@ para ganar: 6 puls/s basta para Niños, 8 llega hasta National Sport Festival,
 **Claves de localStorage:** `sprinter:records` (récord por categoría),
 `sprinter:progress` (categoría más alta desbloqueada), `sprinter:ghost` (replay).
 
+### El exploit de las dos teclas (corregido)
+
+Se podía hacer 100 m en menos de 5 s pulsando izquierda y derecha **a la vez**,
+solo cuatro veces por segundo. Pasaba el filtro de alternancia (izquierda ≠
+derecha) y el hueco de milisegundos entre las dos teclas se leía como una
+cadencia de 300 pulsaciones/s.
+
+Tres cambios, y los tres hacen falta:
+
+1. **Sellar las pulsaciones con `event.timeStamp`**, no con el cronómetro de
+   carrera ni con `performance.now()` al procesarlas. El cronómetro solo avanza
+   una vez por frame, así que falseaba los huecos; y si la pestaña se congela,
+   los eventos se entregan de golpe y leer el reloj en ese momento daría huecos
+   de 1 ms entre teclas pulsadas con separación real.
+2. **Techo a la cadencia instantánea** (`MIN_KEY_GAP`, 50 ms = 20 puls/s).
+3. **Caída** por debajo de `STUMBLE_GAP` (25 ms).
+
+El umbral está medido, no puesto a ojo: alternando a 16 puls/s con ±50% de
+temblor el hueco más corto fue de 32 ms, así que no salta jugando rápido y
+sucio. Aporreando las dos teclas no se termina la carrera.
+
 **Próximo paso:** Semana 7-8 — sprites del corredor, música por categoría,
-SFX, táctil y deploy. El corredor sigue siendo geometría provisional; el ciclo
-de zancada ya va atado a la distancia, así que los sprites entran sin tocar la
-lógica.
+SFX, táctil y deploy. El corredor ya tiene extremidades articuladas y pose de
+caída, pero sigue siendo geometría dibujada a mano, no sprites. El ciclo de
+zancada va atado a la distancia, así que los sprites entran sin tocar la lógica.
