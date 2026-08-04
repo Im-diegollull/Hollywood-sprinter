@@ -219,9 +219,19 @@ en vez de correr a framerate fijo. Esto elimina el efecto de "patinar" sin cambi
 
 ```javascript
 // El frame depende de la distancia recorrida, no del tiempo
-const STRIDE_LENGTH = 2.0;   // metros por zancada completa
-const frameIndex = Math.floor((distance / STRIDE_LENGTH) * FRAMES_PER_STRIDE) % TOTAL_FRAMES;
+const STRIDE_LENGTH = 3.6;   // metros por ciclo completo (las dos piernas)
+const cycle = distance / STRIDE_LENGTH;
 ```
+
+⚠️ **El ciclo de zancada no es simétrico.** Interpolar dos senos desfasados da un
+vaivén regular que el ojo lee como muñeco por muy articulado que esté el dibujo.
+Un sprint tiene fases bien distintas — contacto, apoyo, impulso, talón al glúteo,
+rodilla arriba, estirar, bajar — y la rodilla sube mucho más de lo que baja.
+`STRIDE_POSES` en `render/Renderer.js` son ocho poses clave que se interpolan;
+la pierna contraria va media vuelta desfasada y los brazos otra media.
+
+`STRIDE_LENGTH` también importa: un velocista da unos 4.4 pasos por segundo a
+tope. Con 2.0 m por ciclo las piernas iban al doble de rápido de lo real.
 
 Con esto, si el corredor va más rápido las piernas se mueven más rápido, automáticamente
 y de forma correcta.

@@ -3,7 +3,70 @@ import { Track, FORWARD, LANE_PITCH } from './Track.js';
 const VIEW_WIDTH = 960;
 const VIEW_HEIGHT = 540;
 
-const STRIDE_LENGTH = 2.0;   // metros por zancada completa
+// Metros por ciclo completo (las dos piernas). Un velocista da unos 4.4 pasos
+// por segundo a tope, así que a 9 m/s el ciclo dura ~0.45 s. Con 2.0 m las
+// piernas iban al doble de rápido de lo real y se veía acelerado.
+const STRIDE_LENGTH = 3.6;
+
+/**
+ * Ciclo de zancada de una pierna, en ocho poses.
+ *
+ * Cada pose da la posición de rodilla y pie respecto a la cadera: `F` es hacia
+ * delante en la pista y `D` hacia abajo. El suelo está a 17 de la cadera.
+ *
+ * La clave es que el ciclo NO es simétrico. Un sprint tiene empuje, vuelo y
+ * contacto, y la rodilla sube mucho más de lo que baja: el talón se pega al
+ * glúteo y la pierna se pliega en el aire. Interpolar dos senos desfasados
+ * daba un vaivén regular que el ojo lee como muñeco por muy articulado que
+ * esté.
+ */
+const STRIDE_POSES = [
+  { kneeF: 3.5, kneeD: 8, footF: 1.5, footD: 9 },  // contacto con el suelo
+  { kneeF: 0, kneeD: 8, footF: 0, footD: 9 },      // apoyo bajo el cuerpo
+  { kneeF: -4, kneeD: 8, footF: -5, footD: 8 },    // impulso, pierna atrás
+  { kneeF: -5, kneeD: 6, footF: 1, footD: 3 },     // talón al glúteo
+  { kneeF: 2, kneeD: 4, footF: 2, footD: 2 },      // la rodilla sube
+  { kneeF: 6, kneeD: 3, footF: 4, footD: 4 },      // rodilla arriba del todo
+  { kneeF: 6, kneeD: 5, footF: 6, footD: 8 },      // estira la pierna
+  { kneeF: 5, kneeD: 7, footF: 4, footD: 9 },      // baja a buscar el suelo
+];
+
+// De pie y quieto. Se mezcla con el ciclo según el esfuerzo, para que parado
+// el corredor no aparezca con una pierna en el aire.
+const STAND_POSE = { kneeF: 0, kneeD: 8, footF: 0, footD: 9 };
+
+/** Brazos, en contrafase con las piernas. Codo doblado, mano a la barbilla. */
+const ARM_POSES = [
+  { elbowF: -3, elbowD: 7, handF: 3, handD: 8 },
+  { elbowF: -4, elbowD: 7, handF: -1, handD: 9 },
+  { elbowF: 2, elbowD: 7, handF: 4, handD: 4 },
+  { elbowF: 4, elbowD: 6, handF: 6, handD: 2 },
+  { elbowF: 2, elbowD: 7, handF: 5, handD: 4 },
+  { elbowF: -1, elbowD: 7, handF: 2, handD: 7 },
+];
+const ARM_STAND = { elbowF: 0, elbowD: 7, handF: 0, handD: 9 };
+
+/** Interpola circularmente entre las poses de un ciclo. */
+function samplePose(poses, cycle) {
+  const n = poses.length;
+  const f = (((cycle % 1) + 1) % 1) * n;
+  const i = Math.floor(f);
+  const k = f - i;
+  const a = poses[i];
+  const b = poses[(i + 1) % n];
+  const out = {};
+  for (const key of Object.keys(a)) out[key] = a[key] + (b[key] - a[key]) * k;
+  return out;
+}
+
+/** Mezcla una pose con la de reposo según el esfuerzo (0 = parado). */
+function blendPose(pose, rest, effort) {
+  const out = {};
+  for (const key of Object.keys(pose)) {
+    out[key] = rest[key] + (pose[key] - rest[key]) * effort;
+  }
+  return out;
+}
 
 // Dirección de avance en pantalla: las extremidades se balancean a lo largo
 // de la pista, no en horizontal.
@@ -220,9 +283,10 @@ class Renderer {
 
   drawRunningRunner(x, y, distance, speed, kit) {
     const { ctx } = this;
-    const phase = (distance / STRIDE_LENGTH) * Math.PI * 2;
+    const cycle = distance / STRIDE_LENGTH;
     const effort = Math.min(speed / 7, 1);
-    const bob = Math.abs(Math.sin(phase * 2)) * 2 * effort;
+    // El cuerpo sube en el vuelo y baja al contacto: dos veces por ciclo
+    const bob = Math.abs(Math.sin(cycle * Math.PI * 2)) * 2 * effort;
 
     const hipY = y - 17 - bob;
     const shoulderY = y - 31 - bob;
@@ -231,18 +295,20 @@ class Renderer {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Piernas: muslo y pantorrilla articulados en la rodilla. La pierna que
-    // va hacia delante levanta la rodilla y despega el pie del suelo.
+    // Piernas: muslo y pantorrilla articulados en la rodilla, siguiendo las
+    // poses del ciclo. La pierna izquierda va media vuelta desfasada.
     for (const side of [0, 1]) {
-      const p = phase + side * Math.PI;
-      const swing = Math.sin(p);
-      const lift = Math.max(0, Math.sin(p + 0.5));
+      const pose = blendPose(
+        samplePose(STRIDE_POSES, cycle + side * 0.5),
+        STAND_POSE,
+        effort
+      );
 
       const hipX = x + (side === 0 ? -3 : 3);
-      const kneeX = hipX + DIR.x * swing * 5 + lean;
-      const kneeY = hipY + 9 - lift * 3.5;
-      const footX = kneeX + DIR.x * swing * 6;
-      const footY = y - lift * 9 + DIR.y * swing * 4;
+      const kneeX = hipX + DIR.x * pose.kneeF + lean;
+      const kneeY = hipY + pose.kneeD + DIR.y * pose.kneeF;
+      const footX = kneeX + DIR.x * pose.footF;
+      const footY = kneeY + pose.footD + DIR.y * pose.footF;
 
       ctx.strokeStyle = kit.skin;
       ctx.lineWidth = side === 0 ? 4.2 : 4.6;
@@ -278,16 +344,21 @@ class Renderer {
     ctx.fillStyle = 'rgba(20, 24, 30, 0.55)';
     ctx.fillRect(x - 2.5, shoulderY + 5, 5, 4);
 
-    // Brazos: codo doblado, en contrafase con las piernas
+    // Brazos: codo doblado. Van en contrafase con la pierna del mismo lado,
+    // que es lo que hace un corredor de verdad para compensar el giro.
     ctx.strokeStyle = kit.skin;
     for (const side of [0, 1]) {
-      const p = phase + Math.PI + side * Math.PI;
-      const swing = Math.sin(p);
+      const pose = blendPose(
+        samplePose(ARM_POSES, cycle + 0.5 + side * 0.5),
+        ARM_STAND,
+        effort
+      );
+
       const shoulderX = x + (side === 0 ? -6 : 6) + lean;
-      const elbowX = shoulderX + DIR.x * swing * 3.5;
-      const elbowY = shoulderY + 8 + DIR.y * swing * 2;
-      const handX = elbowX + DIR.x * swing * 5.5;
-      const handY = elbowY - Math.max(0, swing) * 5 + 2;
+      const elbowX = shoulderX + DIR.x * pose.elbowF;
+      const elbowY = shoulderY + 2 + pose.elbowD + DIR.y * pose.elbowF;
+      const handX = elbowX + DIR.x * pose.handF;
+      const handY = elbowY + (pose.handD - 7) + DIR.y * pose.handF;
 
       ctx.lineWidth = side === 0 ? 3.2 : 3.6;
       ctx.beginPath();

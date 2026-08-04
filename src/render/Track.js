@@ -21,7 +21,7 @@ const PITCH_SQUASH = 0.2646;  // cuánto se aplasta el eje que se aleja
 const LANE_WIDTH = 1.22;      // metros, medida oficial de atletismo
 // El original está más cerca todavía (unos 122), pero a esa distancia apenas
 // caben 8 m de pista y los rivales desaparecen en cuanto te sacan ventaja.
-// Con 84 caben 8.4 m fijos, que el adelanto de cámara estira hasta 13.4
+// Con 84 caben 7.5 m fijos, que el adelanto de cámara estira hasta 12.5
 // cuando hay alguien por delante (ver lookAhead en Renderer). Medido: la
 // ventaja máxima del líder jugando a ritmo competitivo son 5-9 m.
 const SCALE = 84;             // px por metro. Subirlo acerca la cámara
@@ -40,7 +40,7 @@ const D = -SCALE * LANE_WIDTH * Math.cos(YAW) * PITCH_SQUASH;
 
 // Dónde se ancla el corredor. Va escorado a la derecha porque lo que hay
 // por delante queda hacia la izquierda.
-const PLAYER_SX = 560;
+const PLAYER_SX = 500;
 const PLAYER_SY = 360;
 
 const DRAW_BEHIND = 30;   // metros de pista dibujados por detrás
