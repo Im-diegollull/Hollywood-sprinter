@@ -114,7 +114,7 @@ function loop(now) {
     race.update(dt, now / 1000);
     if (wasRunning && race.isFinished) onFinish(now);
     stats.debug = debugPanel.visible;
-    renderer.draw(race, stats);
+    renderer.draw(race, stats, dt);
   }
 
   requestAnimationFrame(loop);

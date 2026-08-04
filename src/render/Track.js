@@ -19,20 +19,29 @@ const PLAYER_LANE = 3;
 const YAW = (37.1 * Math.PI) / 180;
 const PITCH_SQUASH = 0.2646;  // cuánto se aplasta el eje que se aleja
 const LANE_WIDTH = 1.22;      // metros, medida oficial de atletismo
-// El original está más cerca todavía (unos 122), pero a esa distancia solo
-// caben 8 m de pista y los rivales se salen de pantalla en cuanto te sacan
-// ventaja. Con 100 se ven unos 12 m y los carriles siguen llenando el ancho.
-const SCALE = 100;            // px por metro. Subirlo acerca la cámara
+// El original está más cerca todavía (unos 122), pero a esa distancia apenas
+// caben 8 m de pista y los rivales desaparecen en cuanto te sacan ventaja.
+// Con 84 caben 8.4 m fijos, que el adelanto de cámara estira hasta 13.4
+// cuando hay alguien por delante (ver lookAhead en Renderer). Medido: la
+// ventaja máxima del líder jugando a ritmo competitivo son 5-9 m.
+const SCALE = 84;             // px por metro. Subirlo acerca la cámara
 
 // Matriz de proyección: (metros, carriles) -> píxeles
-const A = SCALE * Math.cos(YAW);
-const B = SCALE * Math.sin(YAW) * PITCH_SQUASH;
+//
+// El avance va hacia la IZQUIERDA de la pantalla, como en el original: se
+// niega el eje de la pista dejando intacto el de los carriles. Las líneas
+// siguen teniendo la misma pendiente (una recta no cambia al recorrerla al
+// revés), así que el césped se queda abajo-izquierda y el cielo arriba-derecha;
+// lo único que cambia es hacia dónde se corre.
+const A = -SCALE * Math.cos(YAW);
+const B = -SCALE * Math.sin(YAW) * PITCH_SQUASH;
 const C = SCALE * LANE_WIDTH * Math.sin(YAW);
 const D = -SCALE * LANE_WIDTH * Math.cos(YAW) * PITCH_SQUASH;
 
-// Dónde se ancla el corredor del jugador en pantalla
-const PLAYER_SX = 300;
-const PLAYER_SY = 330;
+// Dónde se ancla el corredor. Va escorado a la derecha porque lo que hay
+// por delante queda hacia la izquierda.
+const PLAYER_SX = 560;
+const PLAYER_SY = 360;
 
 const DRAW_BEHIND = 30;   // metros de pista dibujados por detrás
 const DRAW_AHEAD = 45;    // y por delante
@@ -148,16 +157,18 @@ class Track {
    * deformados con la misma perspectiva, como pintura sobre el suelo.
    */
   drawLaneNumbers(ctx, viewWidth, viewHeight) {
-    const at = 2.4; // metros después de la salida
+    const at = -2.4; // metros antes de la salida: quedan detrás del corredor
     const anchor = this.project(at, LANES / 2);
     if (anchor.x < -300 || anchor.x > viewWidth + 300) return;
 
     for (let lane = 0; lane < LANES; lane++) {
       this.pushTransform(ctx);
       ctx.translate(at, lane + 0.75);
-      // La matriz de pista incluye una reflexión (el eje de carriles sube en
-      // pantalla), así que hay que invertir la Y o los números salen del revés
-      ctx.scale(0.042, -0.042);
+      // Hay que invertir los dos ejes del texto: en coordenadas de pista la
+      // X apunta a la izquierda de la pantalla (se corre hacia allí) y la Y
+      // de los carriles apunta hacia arriba. Sin esto los números salen
+      // espejados y del revés.
+      ctx.scale(-0.042, -0.042);
       ctx.fillStyle = COLORS.paint;
       ctx.font = 'bold 18px ui-monospace, monospace';
       ctx.textAlign = 'center';

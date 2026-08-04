@@ -14,6 +14,11 @@ const DIR = FORWARD;
 // original ocupan aproximadamente un carril de alto.
 const RUNNER_HEIGHT = LANE_PITCH * 0.86;
 
+// Adelanto de cámara hacia quien va en cabeza
+const LOOK_AHEAD_MAX = 5.0;    // metros
+const LOOK_AHEAD_SHARE = 0.55; // fracción de la ventaja del líder
+const LOOK_AHEAD_EASE = 0.45;  // s de constante de tiempo
+
 const COLORS = {
   text: '#e8eef3',
   textDim: '#8ea0b2',
@@ -36,6 +41,7 @@ class Renderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.track = new Track(raceDistance);
+    this.camera = 0;   // adelanto actual, en metros
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
@@ -53,10 +59,10 @@ class Renderer {
     this.ctx.setTransform(fit * dpr, 0, 0, fit * dpr, 0, 0);
   }
 
-  draw(race, stats) {
+  draw(race, stats, dt = 0.016) {
     const runner = race.runner;
 
-    this.track.follow(runner.distance, runner.lane);
+    this.track.follow(runner.distance + this.lookAhead(race, dt), runner.lane);
     this.track.draw(this.ctx, VIEW_WIDTH, VIEW_HEIGHT);
     this.drawStarter(this.track);
 
@@ -86,6 +92,29 @@ class Renderer {
     }
 
     this.drawHUD(race, stats);
+  }
+
+  /**
+   * Adelanto de cámara.
+   *
+   * Anclar la cámara al jugador y ya está deja los rivales fuera de pantalla:
+   * salen a velocidad máxima desde el disparo y en dos segundos te sacan más
+   * metros de los que caben. La cámara se adelanta hasta LOOK_AHEAD_MAX metros
+   * hacia quien va primero, y vuelve sola cuando lo alcanzas.
+   *
+   * Se suaviza con una constante de tiempo, no con un factor por frame, para
+   * que no dependa del framerate.
+   */
+  lookAhead(race, dt) {
+    let lead = 0;
+    for (const rival of race.rivals) {
+      lead = Math.max(lead, rival.distance - race.runner.distance);
+    }
+
+    const target = Math.min(lead * LOOK_AHEAD_SHARE, LOOK_AHEAD_MAX);
+    const k = 1 - Math.exp(-dt / LOOK_AHEAD_EASE);
+    this.camera += (target - this.camera) * k;
+    return this.camera;
   }
 
   /**
@@ -197,7 +226,7 @@ class Renderer {
 
     const hipY = y - 17 - bob;
     const shoulderY = y - 31 - bob;
-    const lean = effort * 2.2;   // se echa hacia delante al correr
+    const lean = effort * 2.2 * DIR.x;   // se echa hacia delante al correr
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -402,8 +431,8 @@ class Renderer {
   drawStartCall(label) {
     const { ctx } = this;
     const isGun = label === '¡YA!';
-    const x = 190;
-    const y = 236;
+    const x = 300;
+    const y = 250;
 
     ctx.font = `bold ${isGun ? 30 : 24}px ui-monospace, monospace`;
     const halfWidth = ctx.measureText(label).width / 2 + 26;
@@ -414,9 +443,9 @@ class Renderer {
     ctx.fill();
     // rabito del bocadillo, apuntando al juez de salida
     ctx.beginPath();
-    ctx.moveTo(x - 26, y + 18);
-    ctx.lineTo(x - 54, y + 52);
-    ctx.lineTo(x - 4, y + 26);
+    ctx.moveTo(x + 4, y + 26);
+    ctx.lineTo(x + 48, y + 58);
+    ctx.lineTo(x + 30, y + 18);
     ctx.closePath();
     ctx.fill();
 
@@ -428,7 +457,7 @@ class Renderer {
   /** Juez de salida, de rojo sobre el césped. Detalle del original. */
   drawStarter(track) {
     const { ctx } = this;
-    const p = track.project(1.5, -1.0);
+    const p = track.project(-1.2, -1.1);
     if (p.x < -40 || p.x > VIEW_WIDTH + 40 || p.y > VIEW_HEIGHT + 60) return;
 
     ctx.save();
