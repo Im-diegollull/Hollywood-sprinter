@@ -65,6 +65,10 @@ class DebugPanel {
   toggle() {
     this.root.classList.toggle('hidden');
   }
+
+  get visible() {
+    return !this.root.classList.contains('hidden');
+  }
 }
 
 export { DebugPanel };

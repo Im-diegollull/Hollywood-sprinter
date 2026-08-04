@@ -501,13 +501,24 @@ panel de calibración (`F2`) si al jugar la curva se siente dura o blanda.
 
 ### Ángulo de la pista
 
-Medido sobre una captura del original: las líneas de carril bajan hacia la derecha
-con pendiente **0.24** y la línea de salida sube con pendiente **-0.57**. Las dos
-salen de la misma proyección: guiñada -33° y eje vertical comprimido a 0.37.
-El césped queda pegado al carril 1 y el graderío tras el carril 8.
+Medido sobre una captura del original a pantalla completa (vídeo de gameplay,
+no la miniatura, que estaba deformada): las líneas de carril bajan hacia la
+derecha con pendiente **0.20** y la línea de salida sube con pendiente **0.35**.
+Las dos salen de la misma proyección: guiñada **37°** y eje vertical aplastado
+a **0.26**, o sea una cámara bastante baja sobre la pista.
 
-Las constantes viven en `src/render/Track.js`. `SCALE` es el zoom: subirlo acerca
-la cámara y se ve menos pista por delante.
+Lo que hay fuera de la pista también importa: el césped va pegado al carril 1
+y por fuera del carril 8 **solo hay cielo azul, no hay graderío**. Números de
+carril pintados sobre el tartán junto a la salida y juez de salida de rojo
+sobre el césped.
+
+Las constantes viven en `src/render/Track.js`. `SCALE` es el zoom: el original
+está en unos 122 px/m, pero a esa distancia solo caben 8 m de pista y los
+rivales se salen de pantalla en cuanto te sacan ventaja. Está puesto en 100,
+que deja ver unos 12 m con los carriles llenando el ancho igual.
+
+Los corredores se miden contra `LANE_PITCH`, no en píxeles fijos: si se mueve
+el zoom, los atletas acompañan solos.
 
 ### Semana 3-4 verificada
 

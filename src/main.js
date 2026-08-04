@@ -113,6 +113,7 @@ function loop(now) {
     const wasRunning = race.isRunning;
     race.update(dt, now / 1000);
     if (wasRunning && race.isFinished) onFinish(now);
+    stats.debug = debugPanel.visible;
     renderer.draw(race, stats);
   }
 
