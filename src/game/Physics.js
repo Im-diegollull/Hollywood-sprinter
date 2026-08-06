@@ -14,11 +14,16 @@ const DEFAULT_TUNING = {
   ACCEL_THRESHOLD: 5.0,     // m/s — dónde termina la fase de arranque
   MAX_KEY_GAP: 1.0,         // s — un hueco mayor no cuenta como cadencia
 
-  // Dos pulsaciones más juntas que esto son las dos teclas a la vez, no una
-  // alternancia: el corredor tropieza. 25 ms equivalen a 40 pulsaciones/s.
-  // Medido: alternando a 16 puls/s con ±50% de temblor el hueco más corto
-  // fue de 32 ms, así que no salta con juego rápido pero sucio.
-  STUMBLE_GAP: 0.025,       // s
+  // Dos pulsaciones más juntas que esto no son una alternancia. 15 ms es el
+  // margen que deja pasar el juego rápido y sucio: un teclado USB reporta dos
+  // teclas pulsadas a la vez con 0-8 ms de separación, así que por debajo de
+  // 15 ms es de verdad simultáneo.
+  //
+  // Y aun así no tira a la primera: hacen falta STRIKES_TO_FALL seguidas
+  // dentro de STRIKE_WINDOW. Una pulsación sucia suelta solo se ignora.
+  STUMBLE_GAP: 0.015,       // s
+  STRIKES_TO_FALL: 3,       // cuántas seguidas hacen falta para caerse
+  STRIKE_WINDOW: 1.2,       // s sin ninguna y se perdona lo acumulado
   MIN_KEY_GAP: 0.05,        // s — techo de la cadencia instantánea (20/s)
   FALL_DURATION: 1.1,       // s tirado en el suelo sin poder hacer nada
   FALL_DECEL: 16.0,         // m/s² — frenazo al caer

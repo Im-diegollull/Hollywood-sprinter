@@ -134,10 +134,11 @@ const CADENCE_SMOOTHING = 0.15;
 
 1. Solo cuenta la pulsación si es **la tecla contraria** a la anterior.
    Machacar la misma tecla no hace nada — eso es lo que da la mecánica de alternar.
-1b. **Las dos teclas a la vez = caída.** Dos pulsaciones separadas por menos de
-   25 ms no son una alternancia: el corredor se va al suelo y pierde 1.1 s sin
-   poder hacer nada. Sin esta regla, aporrear las dos teclas cuatro veces por
-   segundo hacía los 100 m en 4.82 s.
+1b. **Las dos teclas a la vez no cuentan, pero no tiran a la primera.** Dos
+   pulsaciones separadas por menos de 15 ms no son una alternancia y se
+   ignoran. Solo se cae quien insiste: hacen falta **tres** dentro de 1.2 s.
+   Sin esta regla, aporrear las dos teclas cuatro veces por segundo hacía los
+   100 m en 4.82 s.
 2. La velocidad objetivo depende de la **cadencia** (pulsaciones/segundo), no de sumar
    velocidad por cada pulsación.
 3. Si dejas de pulsar, la velocidad decae. No puedes coastear.
@@ -155,7 +156,7 @@ function onKeyPress(key, eventTime) {
   if (key === lastKey) return;        // misma tecla = no cuenta
 
   const gap = eventTime - lastKeyTime;
-  if (gap < STUMBLE_GAP) return fall(); // las dos teclas a la vez: al suelo
+  if (gap < STUMBLE_GAP) return tooSoon(); // se ignora; a la tercera, al suelo
 
   const clamped = Math.min(Math.max(gap, MIN_KEY_GAP), MAX_KEY_GAP);
   avgGap += (clamped - avgGap) * GAP_SMOOTHING;
@@ -695,11 +696,26 @@ Tres cambios, y los tres hacen falta:
    los eventos se entregan de golpe y leer el reloj en ese momento daría huecos
    de 1 ms entre teclas pulsadas con separación real.
 2. **Techo a la cadencia instantánea** (`MIN_KEY_GAP`, 50 ms = 20 puls/s).
-3. **Caída** por debajo de `STUMBLE_GAP` (25 ms).
+3. **Ignorar** las pulsaciones por debajo de `STUMBLE_GAP` (15 ms).
 
-El umbral está medido, no puesto a ojo: alternando a 16 puls/s con ±50% de
-temblor el hueco más corto fue de 32 ms, así que no salta jugando rápido y
-sucio. Aporreando las dos teclas no se termina la carrera.
+**Lo que mata el truco es ignorarlas, no la caída.** Si la segunda tecla del
+par no cuenta, lo que acaba midiendo el juego es el ritmo al que juntas los
+pares —cuatro por segundo— y no los milisegundos de dentro. La caída es solo
+el castigo para quien insiste, y por eso puede permitirse ser generosa.
+
+### Cuánto perdona (medido)
+
+| Situación | Qué pasa |
+|---|---|
+| Alternar de 6 a 18 puls/s, temblor de ±0% a ±70% | **Ninguna caída** |
+| 1 o 2 veces las dos a la vez seguidas | **No te caes** |
+| 3 veces dentro de 1.2 s | Caída |
+| 10 veces repartidas, separadas más de 1.2 s | **No te caes** |
+| Aporrear las dos teclas de 4 a 10 veces/s | No se termina la carrera |
+
+Antes el umbral era de 25 ms y bastaba **una** pulsación sucia para acabar en
+el suelo. Jugando rápido eso pasa sin querer, y el castigo de 1.1 s arruinaba
+la carrera por un error que ni notas que has cometido.
 
 **Próximo paso:** Semana 7-8. Los SFX ya están (sintetizados, ver arriba) y el
 reproductor de música también: solo falta soltar los archivos en

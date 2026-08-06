@@ -9,6 +9,7 @@ import {
 const PRESS = {
   OK: 'ok',
   SAME_KEY: 'same-key',
+  TOO_SOON: 'too-soon',   // demasiado junta: no cuenta, pero tampoco tira
   STUMBLE: 'stumble',
   BLOCKED: 'blocked',
 };
@@ -35,6 +36,8 @@ class Runner {
     this.lastKeyTime = 0;
     this.strokes = 0;
     this.stumbles = 0;
+    this.strikes = 0;         // pulsaciones demasiado juntas seguidas
+    this.lastStrikeTime = -99;
     this.fallTimer = 0;
     this.finished = false;
     this.finishTime = null;
@@ -54,10 +57,23 @@ class Runner {
 
     const gap = time - this.lastKeyTime;
 
-    // Las dos teclas a la vez: se tropieza y se va al suelo
+    // Pulsación demasiado pegada a la anterior para ser una alternancia.
+    //
+    // No tira al suelo a la primera: se ignora sin más. Ignorarla ya mata el
+    // truco de aporrear las dos teclas, porque lo que acaba contando es el
+    // ritmo al que juntas los pares y no los milisegundos de dentro. El suelo
+    // se reserva para quien insiste, que es de lo único que hay que
+    // protegerse. Una pulsación sucia suelta jugando rápido no cuesta nada.
     if (this.lastKey !== null && gap < TUNING.STUMBLE_GAP) {
-      this.fall(time);
-      return PRESS.STUMBLE;
+      if (time - this.lastStrikeTime > TUNING.STRIKE_WINDOW) this.strikes = 0;
+      this.strikes++;
+      this.lastStrikeTime = time;
+
+      if (this.strikes >= TUNING.STRIKES_TO_FALL) {
+        this.fall(time);
+        return PRESS.STUMBLE;
+      }
+      return PRESS.TOO_SOON;
     }
 
     if (this.lastKey !== null) {
@@ -76,6 +92,7 @@ class Runner {
     this.avgGap = 0;
     this.lastKey = null;
     this.lastKeyTime = time;
+    this.strikes = 0;
     this.stumbles++;
   }
 
