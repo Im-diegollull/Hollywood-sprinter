@@ -255,8 +255,14 @@ que atribuir. Lo que suena:
 | Juez | Tono triangular a 392 Hz | "En sus marcas" y "listos" |
 | Pisada | Ruido de banda 1300-2000 Hz + golpe a 95 Hz | Cada media zancada |
 | Caída | Barrido 90→38 Hz + ruido con paso bajo | Al pulsar las dos teclas |
-| Público | Dos capas de ruido en bucle, grave y aguda | Siempre, sube con la carrera |
-| Meta | Rugido del público + acorde si ganas | Al cruzar |
+| Meta | Acorde al alza si ganas, caída corta si no | Al cruzar |
+
+⚠️ **Nada suena en bucle, y no puede volver a sonar.** Hubo un murmullo de
+público hecho con dos capas de ruido filtrado en bucle y sonaba exactamente a
+viento — porque ruido blanco con paso bajo *es* como se sintetiza el viento.
+Se quitó entero. Si algún día se quiere público, tiene que ser una grabación,
+no ruido rosa. Comprobado renderizando cada efecto: todos caen a silencio
+digital exacto (cola 0.000000), incluida una carrera completa.
 
 **Las pisadas van atadas a la distancia, no al reloj.** `main.js` cuenta medias
 zancadas con el mismo `STRIDE_LENGTH` que usa el renderer, así que el sonido
@@ -405,7 +411,7 @@ sprinter-remake/
 │   │   └── Track.js         # Proyección diagonal, carriles, graderío, césped
 │   ├── audio/
 │   │   ├── MusicManager.js  # Un track por nivel
-│   │   └── SFX.js           # Disparo, pasos, público
+│   │   └── SFX.js           # Disparo, juez, pasos, caída, meta
 │   ├── data/
 │   │   └── levels.js        # Las 9 categorías con sus tiempos reales
 │   ├── ui/
@@ -477,7 +483,7 @@ sprinter-remake/
 - [ ] Sprites de corredor con animación sincronizada
 - [x] Aspecto distinto por categoría (niños, niñas, cyborgs, marcianos, dios)
 - [x] Reproductor de música por nivel — faltan los archivos, ver `public/music/`
-- [x] SFX: disparo de salida, pasos, público (sintetizados, sin ficheros)
+- [x] SFX: disparo de salida, juez, pasos, caída y meta (sintetizados, sin ficheros)
 - [ ] Partículas de polvo en las zancadas
 - [ ] Soporte táctil (dos botones grandes en mobile)
 - [ ] Deploy a GitHub Pages + itch.io

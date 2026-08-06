@@ -1,6 +1,11 @@
 /**
  * Efectos de sonido sintetizados con la Web Audio API.
  *
+ * Todo lo que suena es percusivo y dura décimas de segundo. NO hay ruido en
+ * bucle: hubo un murmullo de público hecho con dos capas de ruido filtrado y
+ * sonaba exactamente a viento, porque es así como se sintetiza el viento. Si
+ * algún día vuelve el público, tiene que ser una grabación, no ruido rosa.
+ *
  * No hay ficheros de audio: el disparo, las pisadas y el público se generan
  * en el navegador. Así el juego no pesa más, carga instantáneo y no hay
  * licencias que atribuir. La música por categoría sí necesitará ficheros
@@ -11,7 +16,6 @@
  */
 
 const MASTER = 0.55;
-const CROWD_EASE = 0.9;   // s de constante de tiempo del murmullo
 const NOISE_SECONDS = 2;
 
 /** Ruido blanco pregenerado. Es la base del disparo, las pisadas y el público. */
@@ -26,7 +30,6 @@ class SFX {
   constructor() {
     this.ctx = null;
     this.muted = false;
-    this.crowdLevel = -1;
   }
 
   /** Se llama desde cualquier pulsación. Sin esto el navegador no deja sonar. */
@@ -44,7 +47,6 @@ class SFX {
     this.master.connect(this.ctx.destination);
 
     this.noise = buildNoise(this.ctx);
-    this.buildCrowd();
   }
 
   toggleMute() {
@@ -53,56 +55,6 @@ class SFX {
       this.master.gain.setTargetAtTime(this.muted ? 0 : MASTER, this.ctx.currentTime, 0.05);
     }
     return this.muted;
-  }
-
-  /**
-   * Murmullo del estadio: ruido filtrado en bucle. Dos capas, una grave para
-   * el cuerpo y otra aguda para que no suene a viento.
-   */
-  buildCrowd() {
-    const { ctx } = this;
-    this.crowd = ctx.createGain();
-    this.crowd.gain.value = 0;
-    this.crowd.connect(this.master);
-
-    const layer = (freq, q, gain, type) => {
-      const src = ctx.createBufferSource();
-      src.buffer = this.noise;
-      src.loop = true;
-      const filter = ctx.createBiquadFilter();
-      filter.type = type;
-      filter.frequency.value = freq;
-      filter.Q.value = q;
-      const level = ctx.createGain();
-      level.gain.value = gain;
-      src.connect(filter);
-      filter.connect(level);
-      level.connect(this.crowd);
-      src.start();
-    };
-
-    layer(520, 0.7, 0.9, 'lowpass');
-    layer(2400, 1.2, 0.22, 'bandpass');
-  }
-
-  /** @param {number} level 0-1, cuánto ruge el público ahora mismo */
-  setCrowd(level) {
-    if (!this.ctx) return;
-    if (Math.abs(level - this.crowdLevel) < 0.02) return;
-    this.crowdLevel = level;
-    this.crowd.gain.setTargetAtTime(level * 0.32, this.ctx.currentTime, CROWD_EASE);
-  }
-
-  /** Subidón corto del público por encima de su nivel actual. */
-  cheer(peak = 0.34, hold = 0.5) {
-    if (!this.ctx) return;
-    const t = this.ctx.currentTime;
-    const gain = this.crowd.gain;
-    gain.cancelScheduledValues(t);
-    gain.setValueAtTime(gain.value, t);
-    gain.linearRampToValueAtTime(peak, t + 0.12);
-    gain.setValueAtTime(peak, t + hold);
-    gain.setTargetAtTime(Math.max(this.crowdLevel, 0) * 0.32, t + hold, 1.2);
   }
 
   /** Golpe de ruido con envolvente percusiva. */
@@ -158,7 +110,6 @@ class SFX {
     this.burst({ gain: 0.85, decay: 0.16, type: 'highpass', freq: 1100 });
     this.tone({ freq: 140, slideTo: 45, gain: 0.6, decay: 0.18 });
     this.burst({ gain: 0.16, decay: 0.7, type: 'lowpass', freq: 700 });
-    this.cheer(0.3, 0.8);
   }
 
   /** Voz del juez en "en sus marcas" y "listos". El "¡ya!" es el disparo. */
@@ -190,12 +141,11 @@ class SFX {
     this.burst({ gain: 0.45, decay: 0.4, type: 'lowpass', freq: 420 });
   }
 
-  /** Cruce de meta. */
+  /** Cruce de meta: acorde al alza si ganas, caída corta si no. */
   finish(won) {
     if (!this.ctx) return;
-    this.cheer(won ? 0.42 : 0.26, won ? 1.6 : 0.7);
-    if (!won) return;
-    [523.25, 659.25, 783.99].forEach((freq, i) => {
+    const chord = won ? [523.25, 659.25, 783.99] : [392.0, 329.63];
+    chord.forEach((freq, i) => {
       this.tone({ freq, gain: 0.16, decay: 0.5, type: 'triangle', delay: i * 0.09 });
     });
   }

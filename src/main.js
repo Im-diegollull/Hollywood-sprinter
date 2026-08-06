@@ -130,11 +130,6 @@ function updateAudio(race, wasRunning) {
       sfx.step(Math.min(race.runner.speed / 12, 1));
     }
   }
-
-  // El público se va calentando conforme se acerca la meta
-  if (race.isFinished) return;               // lo lleva el remate de onFinish
-  if (race.isRunning) sfx.setCrowd(0.35 + 0.5 * (race.runner.distance / race.distance));
-  else sfx.setCrowd(0.25);
 }
 
 input.onPress = (side, clock) => {
@@ -186,7 +181,6 @@ function loop(now) {
   lastTime = now;
 
   if (screen === SCREEN.MENU) {
-    sfx.setCrowd(0.12);   // el estadio se oye de fondo también en el menú
     renderer.drawMenu(menu, (id) => getBest(`categoria-${id}`));
   } else {
     const wasRunning = race.isRunning;
