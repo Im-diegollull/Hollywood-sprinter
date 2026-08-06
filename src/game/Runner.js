@@ -80,7 +80,12 @@ class Runner {
   }
 
   update(dt, time) {
-    if (this.finished) return;
+    // Ya ha cruzado: sigue corriendo y afloja, no se clava en la línea
+    if (this.finished) {
+      this.speed = Math.max(this.speed - TUNING.RUNOUT_DECEL * dt, 0);
+      this.distance += this.speed * dt;
+      return;
+    }
 
     if (this.fallen) {
       this.fallTimer -= dt;
@@ -98,11 +103,14 @@ class Runner {
     this.distance += this.speed * dt;
   }
 
-  /** Marca la llegada interpolando el instante exacto de cruce de meta. */
+  /**
+   * Marca la llegada interpolando el instante exacto de cruce de meta.
+   * La distancia NO se recorta a los 100 m: el corredor sigue adelante y solo
+   * se congela el crono.
+   */
   finish(raceDistance, time) {
     const overshoot = this.distance - raceDistance;
     const correction = this.speed > 0 ? overshoot / this.speed : 0;
-    this.distance = raceDistance;
     this.finished = true;
     this.finishTime = time - correction;
   }

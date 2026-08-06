@@ -1,3 +1,5 @@
+import { TUNING } from './Physics.js';
+
 /**
  * Rival de velocidad constante.
  *
@@ -26,16 +28,19 @@ class Rival {
     return this.targetTime;
   }
 
+  /**
+   * Al cruzar la meta no se para: sigue de largo aflojando poco a poco.
+   * Clavarlos en la línea se veía raro y no es lo que hace un velocista.
+   */
   update(dt, time, raceDistance) {
-    if (this.finished) return;
-
-    this.distance += this.speed * dt;
-
-    if (this.distance >= raceDistance) {
-      this.distance = raceDistance;
+    if (!this.finished && this.distance >= raceDistance) {
       this.finished = true;
-      this.finishTime = raceDistance / this.speed;
+      this.finishTime = this.targetTime;
     }
+    if (this.finished) {
+      this.speed = Math.max(this.speed - TUNING.RUNOUT_DECEL * dt, 0);
+    }
+    this.distance += this.speed * dt;
   }
 }
 

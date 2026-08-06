@@ -1,3 +1,5 @@
+import { TUNING } from './Physics.js';
+
 /**
  * Nivel 9 — Yourself. El rival es la repetición de tu mejor carrera de
  * God Velocity, así que es el único que sí acelera: eres tú.
@@ -6,6 +8,8 @@
  * la mitad en localStorage que un array de objetos.
  */
 class Ghost {
+  isGhost = true;   // el renderer lo dibuja translúcido
+
   constructor(samples, totalTime, lane, name = 'TU FANTASMA') {
     this.samples = samples;
     this.totalTime = totalTime;
@@ -26,15 +30,19 @@ class Ghost {
     return this.totalTime;
   }
 
+  /** Como los rivales, tras la meta sigue de largo aflojando poco a poco. */
   update(dt, time, raceDistance) {
-    if (this.finished) return;
+    if (this.finished) {
+      this.speed = Math.max(this.speed - TUNING.RUNOUT_DECEL * dt, 0);
+      this.distance += this.speed * dt;
+      return;
+    }
 
     const previous = this.distance;
     this.distance = this.distanceAt(time);
     this.speed = dt > 0 ? (this.distance - previous) / dt : this.speed;
 
     if (this.distance >= raceDistance || time >= this.totalTime) {
-      this.distance = raceDistance;
       this.finished = true;
       this.finishTime = this.totalTime;
     }

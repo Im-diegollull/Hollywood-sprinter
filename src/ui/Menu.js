@@ -63,6 +63,24 @@ class Menu {
     return { type: 'race', level: item.level };
   }
 
+  /**
+   * Deja el cursor donde tiene sentido al volver de una carrera: sobre la
+   * categoría que acabas de correr, o sobre la siguiente si la has ganado.
+   * El contrarreloj no está en la lista, así que vuelve al menú principal.
+   *
+   * @param {object} level categoría corrida
+   * @param {boolean} advance true si se ganó, para saltar a la siguiente
+   */
+  focusLevel(level, advance = false) {
+    if (!level?.id) {
+      this.reset();
+      return;
+    }
+    this.screen = SCREEN.LEVELS;
+    const target = Math.min(level.id + (advance ? 1 : 0), this.unlocked, LEVELS.length);
+    this.index = Math.max(target, 1) - 1;
+  }
+
   /** @returns {boolean} true si el menú ha retrocedido de pantalla */
   back() {
     if (this.screen === SCREEN.LEVELS) {

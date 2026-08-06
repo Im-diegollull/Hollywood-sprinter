@@ -22,6 +22,7 @@ const DEFAULT_TUNING = {
   MIN_KEY_GAP: 0.05,        // s — techo de la cadencia instantánea (20/s)
   FALL_DURATION: 1.1,       // s tirado en el suelo sin poder hacer nada
   FALL_DECEL: 16.0,         // m/s² — frenazo al caer
+  RUNOUT_DECEL: 3.2,        // m/s² — cómo aflojan después de cruzar la meta
 };
 
 const TUNING = { ...DEFAULT_TUNING };

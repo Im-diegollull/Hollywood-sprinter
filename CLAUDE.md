@@ -301,6 +301,60 @@ Siempre revisar la licencia antes de usar. Guardar los créditos en un archivo `
 
 ---
 
+## Skins por categoría
+
+`src/render/Kits.js` da color, tamaño y cabeza a los rivales de cada nivel. El
+jugador lleva **siempre** el mismo equipo: es lo que te deja encontrarte de un
+vistazo entre ocho corredores.
+
+| Nivel | Cómo se ven |
+|---|---|
+| 1 Niños | Bajitos (0.74), chándal amarillo y azul |
+| 2 Physical Festival | Niñas con coleta, violeta y blanco |
+| 3 High School | Adolescentes con los colores del centro |
+| 4 National Sport | Equipación de selección, rojo y blanco |
+| 5 The Olympics | Profesionales, dorsal dorado |
+| 6 Cyborg | Piel metálica, visor con sensor rojo, aura |
+| 7 Galaxy | Marcianos verdes con antenas, aura violeta |
+| 8 God Velocity | Dorado, más alto (1.1), con aureola |
+| 9 Yourself | Tu propio kit al 50 % de opacidad |
+
+⚠️ **Ningún kit puede acercarse al rosa del jugador.** Las niñas iban de rosa
+y costaba distinguirse en la pista. Si se añade un kit nuevo, comprobarlo en
+carrera, no solo en la paleta.
+
+Lo que distingue de verdad a las categorías no es el color sino la **silueta**:
+la escala y el estilo de cabeza (`normal`, `ponytail`, `visor`, `antennae`,
+`halo`). De espaldas y en movimiento el color se pierde antes que la forma.
+
+---
+
+## Rivales con nombre
+
+`src/data/names.js` guarda un bote de 14-16 nombres por categoría, temáticos:
+críos, niñas, adolescentes, atletas de selección, élite mundial, unidades
+robóticas, marcianos.
+
+**Los tiempos se barajan antes de repartirlos.** El rango de la categoría no
+cambia —el mejor rival de Olimpiadas siempre hace 9.58— pero quién lo corre
+cambia en cada carrera, y también su carril. Sin esto ganaba siempre el mismo
+carril y te aprendías la pista en lugar de correrla. Repetir con `R` vuelve a
+sortear.
+
+---
+
+## Nadie frena en la línea
+
+Al cruzar la meta el crono se congela pero los corredores **siguen de largo**,
+aflojando a `RUNOUT_DECEL` (3.2 m/s²). Clavarse en la línea se veía raro y no
+es lo que hace un velocista.
+
+Esto obliga a separar dos relojes en `Race`: `time` es el tiempo oficial y se
+para en la meta; `runout` cuenta lo de después y es lo que mueve a la gente.
+Por eso `Runner.finish()` **no** recorta la distancia a 100 m.
+
+---
+
 ## Modos de juego
 
 Simple, sin inflar:
@@ -421,8 +475,8 @@ sprinter-remake/
 **Objetivo:** que se vea y suene profesional.
 
 - [ ] Sprites de corredor con animación sincronizada
-- [ ] Sprites distintos por categoría (niños, cyborgs, aliens, dios)
-- [ ] Música: un track por nivel + créditos en CREDITS.md
+- [x] Aspecto distinto por categoría (niños, niñas, cyborgs, marcianos, dios)
+- [x] Reproductor de música por nivel — faltan los archivos, ver `public/music/`
 - [x] SFX: disparo de salida, pasos, público (sintetizados, sin ficheros)
 - [ ] Partículas de polvo en las zancadas
 - [ ] Soporte táctil (dos botones grandes en mobile)
@@ -609,11 +663,13 @@ El umbral está medido, no puesto a ojo: alternando a 16 puls/s con ±50% de
 temblor el hueco más corto fue de 32 ms, así que no salta jugando rápido y
 sucio. Aporreando las dos teclas no se termina la carrera.
 
-**Próximo paso:** Semana 7-8. Los SFX ya están (sintetizados, ver arriba).
-Queda música por categoría, partículas de polvo, botones táctiles grandes y
-deploy. El corredor ya tiene extremidades articuladas y pose de caída, pero
+**Próximo paso:** Semana 7-8. Los SFX ya están (sintetizados, ver arriba) y el
+reproductor de música también: solo falta soltar los archivos en
+`public/music/` con el nombre del nivel (`5.mp3`), en MP3 de 128-192 kbps y que
+enlacen bien en bucle. El nivel sin archivo corre en silencio y no rompe nada.
+Queda polvo en las zancadas, botones táctiles grandes y deploy. El corredor ya tiene extremidades articuladas y pose de caída, pero
 sigue siendo geometría dibujada a mano, no sprites. El ciclo de zancada va
 atado a la distancia, así que los sprites entran sin tocar la lógica.
 
-La música es el único punto que no se puede resolver sin decisiones fuera del
-código: hay que elegir y descargar nueve tracks libres y escribir `CREDITS.md`.
+`CREDITS.md` ya está creado con la tabla de música vacía: hay que rellenar una
+fila por tema antes de publicar, sobre todo si alguno viene de fuera.

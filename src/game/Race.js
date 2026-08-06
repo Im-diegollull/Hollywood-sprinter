@@ -2,6 +2,7 @@ import { Runner } from './Runner.js';
 import { Rival } from './Rival.js';
 import { Ghost } from './Ghost.js';
 import { generateRivalTimes } from '../data/levels.js';
+import { pickNames, shuffled } from '../data/names.js';
 
 const RACE_DISTANCE = 100; // metros
 const LANE_COUNT = 8;
@@ -39,6 +40,17 @@ class Race {
    */
   setLevel(level, ghost = null) {
     this.level = level;
+    this.ghostData = ghost;
+    this.reset();
+  }
+
+  /**
+   * Alinea a los rivales. Se rehace en cada carrera, no solo al cambiar de
+   * categoría: así el sorteo de nombres y tiempos también cambia al repetir.
+   */
+  buildField() {
+    const level = this.level;
+    const ghost = this.ghostData;
     const lanes = [];
     for (let lane = 0; lane < LANE_COUNT; lane++) {
       if (lane !== PLAYER_LANE) lanes.push(lane);
@@ -48,26 +60,30 @@ class Race {
     if (level.ghost && ghost) {
       this.rivals = [new Ghost(ghost.samples, ghost.time, ghostLane)];
     } else {
-      // Sin replay guardado, el nivel 9 cae en God Velocity a ritmo constante
-      const times = generateRivalTimes(level);
+      // Sin replay guardado, el nivel 9 cae en God Velocity a ritmo constante.
+      //
+      // Los tiempos se barajan antes de repartirlos: el rango de la categoría
+      // es siempre el mismo, pero quién lleva el mejor tiempo cambia en cada
+      // carrera. Si no, ganaba siempre el del mismo carril y te aprendías la
+      // pista en vez de correrla.
+      const times = shuffled(generateRivalTimes(level));
+      const names = pickNames(level.ghost ? 8 : level.id, times.length);
       this.rivals = times.map((time, i) => {
         const lane = level.ghost ? ghostLane : lanes[i % lanes.length];
-        const name = level.ghost ? 'GOD VELOCITY' : `Carril ${lane + 1}`;
-        return new Rival(time, lane, name);
+        return new Rival(time, lane, names[i]);
       });
     }
-
-    this.reset();
   }
 
   reset() {
     this.state = STATE.IDLE;
     this.time = 0;
     this.setTimer = 0;
+    this.runout = 0;
     // El "listos" dura un poco distinto cada vez para que no se pueda memorizar
     this.readyExtra = Math.random() * (SET_PHASES[1].jitter ?? 0);
     this.runner.reset();
-    this.rivals.forEach((rival) => rival.reset());
+    this.buildField();
     this.standings = null;
     this.replay = [];       // [t0, x0, t1, x1, ...] para el fantasma
     this.nextSample = 0;
@@ -123,6 +139,16 @@ class Race {
       return;
     }
 
+    // Nadie frena en la línea: al cruzar siguen corriendo y aflojan poco a
+    // poco, como en una carrera de verdad. El cronómetro sí se queda parado,
+    // así que `runout` lleva el tiempo de después por separado.
+    if (this.state === STATE.FINISHED) {
+      this.runout += dt;
+      this.runner.update(dt, clock);
+      this.rivals.forEach((rival) => rival.update(dt, this.time + this.runout, this.distance));
+      return;
+    }
+
     if (this.state !== STATE.RUNNING) return;
 
     this.time += dt;
@@ -130,7 +156,7 @@ class Race {
     this.rivals.forEach((rival) => rival.update(dt, this.time, this.distance));
     this.sampleReplay();
 
-    if (this.runner.distance >= this.distance) {
+    if (!this.runner.finished && this.runner.distance >= this.distance) {
       this.runner.finish(this.distance, this.time);
       this.time = this.runner.finishTime;
       this.replay.push(this.time, this.distance);

@@ -1,4 +1,5 @@
 import { Track, FORWARD, LANE_PITCH } from './Track.js';
+import { PLAYER_KIT, kitFor } from './Kits.js';
 
 const VIEW_WIDTH = 960;
 const VIEW_HEIGHT = 540;
@@ -91,10 +92,8 @@ const COLORS = {
   shadow: 'rgba(0, 0, 0, 0.35)',
 };
 
-// En el original los rivales van todos de blanco y azul, y solo el jugador
-// lleva colores. Es lo que permite encontrarte de un vistazo en la pista.
-const PLAYER_KIT = { skin: '#f0c9a8', singlet: '#e0349b', shorts: '#2438c8', shoes: '#3ad13a' };
-const RIVAL_KIT = { skin: '#f0c9a8', singlet: '#fbfbfb', shorts: '#2438c8', shoes: '#f06ba8' };
+// Los rivales cambian de aspecto en cada categoría (ver render/Kits.js); el
+// jugador lleva siempre el mismo equipo para encontrarse de un vistazo.
 
 /**
  * Dibujo en canvas. Único sitio del proyecto que convierte metros a píxeles.
@@ -143,7 +142,7 @@ class Renderer {
         lane: rival.lane,
         distance: rival.distance,
         speed: rival.speed,
-        kit: RIVAL_KIT,
+        kit: kitFor(race.level, Boolean(rival.isGhost)),
         fallen: false,
       })),
     ].sort((a, b) => b.lane - a.lane);
@@ -264,8 +263,9 @@ class Renderer {
    */
   drawRunner({ x, y }, distance, speed, kit = PLAYER_KIT, fallen = false) {
     const { ctx } = this;
-    // El muñeco está trazado para 34 px de alto; el resto es escalar
-    const s = RUNNER_HEIGHT / 34;
+    // El muñeco está trazado para 34 px de alto; el resto es escalar. Cada
+    // categoría trae su propio tamaño: los niños son bajitos y los dioses no.
+    const s = (RUNNER_HEIGHT / 34) * (kit.scale ?? 1);
 
     ctx.save();
     ctx.fillStyle = COLORS.shadow;
@@ -273,6 +273,19 @@ class Renderer {
     ctx.ellipse(x, y, (fallen ? 14 : 8) * s, 3.2 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // Aura de cyborgs, marcianos y dioses: un halo suave detrás del cuerpo
+    if (kit.glow) {
+      const r = 22 * s;
+      const aura = ctx.createRadialGradient(x, y - 16 * s, 0, x, y - 16 * s, r);
+      aura.addColorStop(0, kit.glow);
+      aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(x, y - 16 * s, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (kit.alpha) ctx.globalAlpha = kit.alpha;
     ctx.translate(x, y);
     ctx.scale(s, s);
     if (fallen) this.drawFallenRunner(0, 0, kit);
@@ -341,7 +354,7 @@ class Renderer {
     ctx.fill();
 
     // Dorsal
-    ctx.fillStyle = 'rgba(20, 24, 30, 0.55)';
+    ctx.fillStyle = kit.bib;
     ctx.fillRect(x - 2.5, shoulderY + 5, 5, 4);
 
     // Brazos: codo doblado. Van en contrafase con la pierna del mismo lado,
@@ -409,17 +422,72 @@ class Renderer {
     this.drawHead(head.x, head.y, kit, 4.2);
   }
 
+  /**
+   * Cabeza vista de espaldas. El estilo lo pone el kit de la categoría: es lo
+   * que más distingue a un niño de un cyborg desde atrás.
+   */
   drawHead(x, shoulderY, kit, radius = 4.8) {
     const { ctx } = this;
+    const cy = shoulderY - radius;
+    const style = kit.head ?? 'normal';
+
+    // La coleta y las antenas salen por detrás, así que van antes que la cara
+    if (style === 'ponytail') {
+      ctx.fillStyle = kit.hair;
+      ctx.save();
+      ctx.translate(x - DIR.x * radius * 0.7, cy + 0.6);
+      ctx.rotate(Math.atan2(DIR.y, DIR.x));
+      ctx.beginPath();
+      ctx.ellipse(-radius * 0.9, 0, radius * 1.15, radius * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (style === 'antennae') {
+      ctx.strokeStyle = kit.hair;
+      ctx.lineWidth = 0.9;
+      for (const side of [-1, 1]) {
+        const tipX = x + side * radius * 0.9;
+        const tipY = cy - radius * 2.1;
+        ctx.beginPath();
+        ctx.moveTo(x + side * radius * 0.35, cy - radius * 0.7);
+        ctx.quadraticCurveTo(x + side * radius * 1.1, cy - radius * 1.5, tipX, tipY);
+        ctx.stroke();
+        ctx.fillStyle = kit.shoes;
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     ctx.fillStyle = kit.skin;
     ctx.beginPath();
-    ctx.arc(x, shoulderY - radius, radius, 0, Math.PI * 2);
+    ctx.arc(x, cy, radius, 0, Math.PI * 2);
     ctx.fill();
-    // pelo: media luna por la parte de arriba, que es lo que se ve de espaldas
-    ctx.fillStyle = '#2b2118';
-    ctx.beginPath();
-    ctx.arc(x, shoulderY - radius - 0.8, radius * 0.95, Math.PI * 0.92, Math.PI * 2.08);
-    ctx.fill();
+
+    if (style === 'visor') {
+      // Banda metálica con la luz del sensor asomando por el lado
+      ctx.fillStyle = kit.singlet;
+      ctx.fillRect(x - radius, cy - radius * 0.35, radius * 2, radius * 0.7);
+      ctx.fillStyle = kit.bib;
+      ctx.beginPath();
+      ctx.arc(x + DIR.x * radius * 0.55, cy, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (style !== 'antennae') {
+      // Pelo: media luna por arriba, que es lo que se ve de espaldas
+      ctx.fillStyle = kit.hair;
+      ctx.beginPath();
+      ctx.arc(x, cy - 0.8, radius * 0.95, Math.PI * 0.92, Math.PI * 2.08);
+      ctx.fill();
+    }
+
+    if (style === 'halo') {
+      ctx.strokeStyle = kit.bib;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.ellipse(x, cy - radius * 1.9, radius * 1.15, radius * 0.42, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   drawHUD(race, stats) {
@@ -613,10 +681,18 @@ class Renderer {
       ctx.fillText(`${row.time.toFixed(2)} s`, x + width - 28, rowY);
     });
 
+    // Al ganar el juego te devuelve solo al menú: la categoría está hecha y
+    // lo siguiente está allí. Perder invita a repetir en el sitio.
     ctx.textAlign = 'center';
-    ctx.fillStyle = COLORS.textDim;
+    ctx.fillStyle = stats.menuIn != null ? COLORS.accent : COLORS.textDim;
     ctx.font = '11px ui-monospace, monospace';
-    ctx.fillText('R para repetir  ·  ESC para el menú', VIEW_WIDTH / 2, y + height - 14);
+    ctx.fillText(
+      stats.menuIn != null
+        ? `Al menú en ${stats.menuIn}…  ·  ENTER para ir ya  ·  R para repetir`
+        : 'R para repetir  ·  ESC para el menú',
+      VIEW_WIDTH / 2,
+      y + height - 14
+    );
   }
 
   drawBanner(title, subtitle) {

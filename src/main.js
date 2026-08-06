@@ -2,6 +2,7 @@ import { Race } from './game/Race.js';
 import { Input } from './game/Input.js';
 import { Renderer, STRIDE_LENGTH } from './render/Renderer.js';
 import { SFX } from './audio/SFX.js';
+import { MusicManager } from './audio/MusicManager.js';
 import { Menu } from './ui/Menu.js';
 import { DebugPanel } from './ui/DebugPanel.js';
 import { getLevel, TIME_TRIAL, LEVELS } from './data/levels.js';
@@ -10,6 +11,9 @@ import { getBest, saveBest, getUnlocked, unlockLevel, getGhost, saveGhost } from
 const SCREEN = { MENU: 'menu', RACE: 'race' };
 const GOD_VELOCITY = 8;   // la categoría cuyo replay alimenta al fantasma
 const RESTART_LOCK = 0.4; // s de gracia tras la meta para no reiniciar sin querer
+// Al ganar se vuelve solo al menú: la categoría está hecha y lo siguiente
+// está allí. Da tiempo a leer la clasificación, y ENTER lo adelanta.
+const AUTO_MENU = 4.5;    // s
 
 const recordKey = (level) => (level.id === 0 ? 'contrarreloj' : `categoria-${level.id}`);
 
@@ -20,6 +24,7 @@ const renderer = new Renderer(canvas, race.distance);
 const debugPanel = new DebugPanel(document.getElementById('debug'));
 const input = new Input(document.getElementById('app'));
 const sfx = new SFX();
+const music = new MusicManager();
 
 let screen = SCREEN.MENU;
 let finishedAt = 0;
@@ -31,9 +36,16 @@ const stats = {
   best: null,
   isRecord: false,
   unlocked: null, // nombre de la categoría recién desbloqueada, si la hay
+  menuIn: null,   // segundos que faltan para volver al menú tras ganar
 };
 
 menu.setUnlocked(getUnlocked());
+music.play('menu');   // no suena hasta la primera tecla, pero queda pedida
+
+/** Ganar una categoría devuelve al menú; perder invita a repetir. */
+function returnsToMenu() {
+  return screen === SCREEN.RACE && race.isFinished && race.won;
+}
 
 function resetAudioTracking() {
   audio.halfStride = 0;
@@ -47,6 +59,7 @@ function startRace(level) {
   stats.isRecord = false;
   stats.unlocked = null;
   screen = SCREEN.RACE;
+  music.play(level.id);
   resetAudioTracking();
 }
 
@@ -60,7 +73,10 @@ function restart() {
 
 function toMenu() {
   menu.setUnlocked(getUnlocked());
+  menu.focusLevel(race.level, race.won);   // el cursor cae en la siguiente
+  stats.menuIn = null;
   screen = SCREEN.MENU;
+  music.play('menu');
 }
 
 /** Cierre de carrera: récord, replay del fantasma y desbloqueo. */
@@ -123,6 +139,7 @@ function updateAudio(race, wasRunning) {
 
 input.onPress = (side, clock) => {
   sfx.unlock();
+  music.unlock();
   if (screen !== SCREEN.RACE || race.isFinished) return;
   race.press(side, clock);
 };
@@ -133,13 +150,15 @@ input.onNavigate = (delta) => {
 
 input.onConfirm = () => {
   sfx.unlock();
+  music.unlock();
   if (screen === SCREEN.MENU) {
     const action = menu.select();
     if (action.type === 'race') startRace(action.level);
     else if (action.type === 'timetrial') startRace(TIME_TRIAL);
     return;
   }
-  if (race.isFinished) restart();
+  // Al ganar, confirmar es "seguir": lleva al menú a por la siguiente
+  if (race.isFinished) returnsToMenu() ? toMenu() : restart();
   else race.begin();
 };
 
@@ -157,6 +176,7 @@ input.onToggleDebug = () => debugPanel.toggle();
 input.onToggleMute = () => {
   sfx.unlock();
   stats.muted = sfx.toggleMute();
+  music.setMuted(stats.muted);
 };
 
 let lastTime = performance.now();
@@ -173,6 +193,16 @@ function loop(now) {
     race.update(dt, now / 1000);
     if (wasRunning && race.isFinished) onFinish(now);
     updateAudio(race, wasRunning);
+
+    // Ganar cierra la categoría: se vuelve solo al menú sin tener que pulsar
+    if (returnsToMenu()) {
+      const left = AUTO_MENU - (now - finishedAt) / 1000;
+      stats.menuIn = Math.max(Math.ceil(left), 0);
+      if (left <= 0) toMenu();
+    } else {
+      stats.menuIn = null;
+    }
+
     stats.debug = debugPanel.visible;
     renderer.draw(race, stats, dt);
   }
