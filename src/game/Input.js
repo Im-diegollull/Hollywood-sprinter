@@ -37,6 +37,7 @@ class Input {
     this.onBack = null;         // () => void   Escape
     this.onRestart = null;      // () => void   R
     this.onToggleDebug = null;  // () => void   F2
+    this.onToggleMute = null;   // () => void   M
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onPointerDown = this._onPointerDown.bind(this);
@@ -77,6 +78,9 @@ class Input {
         break;
       case 'KeyR':
         this.onRestart?.();
+        break;
+      case 'KeyM':
+        this.onToggleMute?.();
         break;
       case 'F2':
         e.preventDefault();

@@ -243,6 +243,31 @@ y de forma correcta.
 
 ---
 
+## SFX — sintetizados, sin ficheros
+
+`src/audio/SFX.js` genera todo con la Web Audio API: no hay ni un archivo de
+audio en el repo. El juego no pesa más, carga instantáneo y no hay licencias
+que atribuir. Lo que suena:
+
+| Efecto | Cómo está hecho | Cuándo |
+|---|---|---|
+| Disparo | Ruido con paso alto + barrido 140→45 Hz + cola grave | Al pasar de "listos" a corriendo |
+| Juez | Tono triangular a 392 Hz | "En sus marcas" y "listos" |
+| Pisada | Ruido de banda 1300-2000 Hz + golpe a 95 Hz | Cada media zancada |
+| Caída | Barrido 90→38 Hz + ruido con paso bajo | Al pulsar las dos teclas |
+| Público | Dos capas de ruido en bucle, grave y aguda | Siempre, sube con la carrera |
+| Meta | Rugido del público + acorde si ganas | Al cruzar |
+
+**Las pisadas van atadas a la distancia, no al reloj.** `main.js` cuenta medias
+zancadas con el mismo `STRIDE_LENGTH` que usa el renderer, así que el sonido
+cae exactamente cuando el pie toca el suelo, sin sincronizar nada a mano. Si
+cambia la animación, cambia el sonido solo.
+
+Nada suena hasta la primera pulsación: los navegadores bloquean el audio sin
+interacción previa, de ahí `unlock()`. **M** silencia.
+
+---
+
 ## Música — un tema por categoría
 
 Cada nivel tiene su música característica. Es parte de la identidad del juego.
@@ -398,7 +423,7 @@ sprinter-remake/
 - [ ] Sprites de corredor con animación sincronizada
 - [ ] Sprites distintos por categoría (niños, cyborgs, aliens, dios)
 - [ ] Música: un track por nivel + créditos en CREDITS.md
-- [ ] SFX: disparo de salida, pasos, respiración, público
+- [x] SFX: disparo de salida, pasos, público (sintetizados, sin ficheros)
 - [ ] Partículas de polvo en las zancadas
 - [ ] Soporte táctil (dos botones grandes en mobile)
 - [ ] Deploy a GitHub Pages + itch.io
@@ -584,7 +609,11 @@ El umbral está medido, no puesto a ojo: alternando a 16 puls/s con ±50% de
 temblor el hueco más corto fue de 32 ms, así que no salta jugando rápido y
 sucio. Aporreando las dos teclas no se termina la carrera.
 
-**Próximo paso:** Semana 7-8 — sprites del corredor, música por categoría,
-SFX, táctil y deploy. El corredor ya tiene extremidades articuladas y pose de
-caída, pero sigue siendo geometría dibujada a mano, no sprites. El ciclo de
-zancada va atado a la distancia, así que los sprites entran sin tocar la lógica.
+**Próximo paso:** Semana 7-8. Los SFX ya están (sintetizados, ver arriba).
+Queda música por categoría, partículas de polvo, botones táctiles grandes y
+deploy. El corredor ya tiene extremidades articuladas y pose de caída, pero
+sigue siendo geometría dibujada a mano, no sprites. El ciclo de zancada va
+atado a la distancia, así que los sprites entran sin tocar la lógica.
+
+La música es el único punto que no se puede resolver sin decisiones fuera del
+código: hay que elegir y descargar nueve tracks libres y escribir `CREDITS.md`.

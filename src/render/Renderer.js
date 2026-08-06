@@ -249,7 +249,7 @@ class Renderer {
     ctx.fillStyle = COLORS.textDim;
     ctx.font = '11px ui-monospace, monospace';
     ctx.fillText(
-      '↑ ↓ para elegir  ·  ENTER para empezar  ·  ESC para volver',
+      '↑ ↓ para elegir  ·  ENTER para empezar  ·  ESC para volver  ·  M silencia',
       VIEW_WIDTH / 2,
       VIEW_HEIGHT - 34
     );
@@ -456,6 +456,11 @@ class Renderer {
       ctx.font = '12px ui-monospace, monospace';
       ctx.fillText(`récord ${stats.best.toFixed(2)} s`, VIEW_WIDTH - 24, 62);
     }
+    if (stats.muted) {
+      ctx.fillStyle = COLORS.textDim;
+      ctx.font = '11px ui-monospace, monospace';
+      ctx.fillText('SIN SONIDO · M', VIEW_WIDTH - 24, stats.best ? 80 : 62);
+    }
     ctx.restore();
 
     if (stats.debug) this.drawDebugReadout(runner);
@@ -633,4 +638,4 @@ class Renderer {
   }
 }
 
-export { Renderer, VIEW_WIDTH, VIEW_HEIGHT };
+export { Renderer, VIEW_WIDTH, VIEW_HEIGHT, STRIDE_LENGTH };
