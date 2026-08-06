@@ -19,19 +19,20 @@ Los temas van en `public/music/` (ver el README de esa carpeta).
 
 | Nivel | Tema | Autor | Licencia | Fuente |
 |---|---|---|---|---|
-| Menú | — | — | — | — |
-| 1 Niños | — | — | — | — |
-| 2 Physical Festival | — | — | — | — |
-| 3 High School Competitions | — | — | — | — |
-| 4 National Sport Festival | — | — | — | — |
-| 5 The Olympics | — | — | — | — |
-| 6 Cyborg | — | — | — | — |
-| 7 Galaxy Athletes Meet | — | — | — | — |
-| 8 God Velocity | — | — | — | — |
-| 9 Yourself | — | — | — | — |
+| Menú | `menu.m4a` | Propia | Propia | — |
+| 1 Niños | `1.m4a` | Propia | Propia | — |
+| 2 Physical Festival | `2.m4a` | Propia | Propia | — |
+| 3 High School Competitions | `3.m4a` | Propia | Propia | — |
+| 4 National Sport Festival | `4.m4a` | Propia | Propia | — |
+| 5 The Olympics | `5.m4a` | Propia | Propia | — |
+| 6 Cyborg | *falta* | — | — | — |
+| 7 Galaxy Athletes Meet | `7.m4a` | Propia | Propia | — |
+| 8 God Velocity | *falta* | — | — | — |
+| 9 Yourself | *falta* | — | — | — |
+| Contrarreloj | `0.m4a` | Propia | Propia | — |
 
-> Rellena una fila por cada tema que añadas. Si la música es propia, pon
-> "Propia" en autor y licencia. Si viene de fuera, hace falta el enlace a la
+> Los temas actuales están puestos como **propios**: si alguno no lo es,
+> corrige la fila antes de publicar. Rellena una fila por cada tema nuevo. Si viene de fuera, hace falta el enlace a la
 > fuente y el nombre exacto de la licencia (CC BY, CC0, Pixabay…), porque las
 > CC BY obligan a citar al autor allá donde se publique el juego.
 

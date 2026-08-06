@@ -20,11 +20,15 @@
  */
 
 const BASE = 'music';
+// Se prueban por orden hasta que una cargue, así da igual en qué formato
+// grabes: m4a (AAC) y mp3 los abren todos los navegadores, ogg no lo abre
+// Safari. No hay que convertir nada.
+const EXTENSIONS = ['m4a', 'mp3', 'ogg'];
 const VOLUME = 0.45;
 const FADE = 0.6;         // s de cruce entre temas
 const FADE_STEP = 0.05;   // s entre pasos del cruce
 
-/** Rutas conocidas que faltan. Evita reintentar una descarga que ya falló. */
+/** Temas sin ningún archivo. Evita reintentar descargas que ya fallaron. */
 const missing = new Set();
 
 class MusicManager {
@@ -63,15 +67,30 @@ class MusicManager {
     if (!this.allowed || missing.has(track)) return;
     if (this.current?.track === track) return;
 
-    const audio = new Audio(`${BASE}/${track}.mp3`);
+    this.fadeOut(this.current?.audio);
+    this.current = null;
+    this.load(track, 0);
+  }
+
+  /**
+   * Intenta una extensión. Si el archivo no está, prueba la siguiente; cuando
+   * se acaban, ese tema se queda sin música y no se vuelve a pedir.
+   */
+  load(track, extIndex) {
+    if (extIndex >= EXTENSIONS.length) {
+      missing.add(track);
+      return;
+    }
+
+    const audio = new Audio(`${BASE}/${track}.${EXTENSIONS[extIndex]}`);
     audio.loop = true;
     audio.volume = 0;
     audio.preload = 'auto';
 
-    // Si el archivo no está, ese nivel se queda sin música y ya
     audio.addEventListener('error', () => {
-      missing.add(track);
-      if (this.current?.audio === audio) this.current = null;
+      if (this.current?.audio !== audio) return;
+      this.current = null;
+      if (this.track === track) this.load(track, extIndex + 1);
     });
 
     const started = audio.play();
@@ -82,7 +101,6 @@ class MusicManager {
       });
     }
 
-    this.fadeOut(this.current?.audio);
     this.current = { audio, track };
     if (!this.muted) this.fadeIn(audio);
   }
