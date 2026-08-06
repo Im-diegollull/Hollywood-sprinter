@@ -82,11 +82,11 @@ const KITS = {
     glow: 'rgba(255, 209, 102, 0.6)', bib: 'rgba(232, 194, 74, 0.9)',
   }),
 
-  // Yourself: tu propio récord, translúcido
-  9: kit({ alpha: 0.5, glow: 'rgba(224, 52, 155, 0.35)' }),
-
   // Nacho & Juanpa: cada uno lleva el suyo, ver NAMED_KITS
-  10: kit({ scale: 1.02, skin: '#e8b98d', singlet: '#c62828', shorts: '#1f4fd8', shoes: '#ff4fa8' }),
+  9: kit({ scale: 1.02, skin: '#e8b98d', singlet: '#c62828', shorts: '#1f4fd8', shoes: '#ff4fa8' }),
+
+  // Yourself: tu propio récord, translúcido
+  10: kit({ alpha: 0.5, glow: 'rgba(224, 52, 155, 0.35)' }),
 };
 
 /**
@@ -121,7 +121,7 @@ const NAMED_KITS = {
  */
 function kitFor(level, isGhost, name) {
   if (name && NAMED_KITS[name]) return NAMED_KITS[name];
-  if (level.ghost) return isGhost ? KITS[9] : KITS[8];
+  if (level.ghost) return isGhost ? KITS[10] : KITS[8];
   return KITS[level.id] ?? KITS[4];
 }
 

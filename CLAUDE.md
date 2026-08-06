@@ -66,14 +66,14 @@ Estos son los rangos reales. No inventar tiempos — usar estos.
 | 6 | Cyborg | 9.68 – 9.00 s | 10.33 – 11.11 m/s |
 | 7 | Galaxy Athletes Meet | 9.00 – 8.00 s | 11.11 – 12.50 m/s |
 | 8 | God Velocity | 7.50 s | 13.33 m/s |
-| 9 | Yourself | Tu mejor tiempo | Replay de tu récord |
-| 10 | Nacho & Juanpa | 6.95 – 7.10 s | 14.08 – 14.39 m/s |
+| 9 | Nacho & Juanpa | 6.95 – 7.10 s | 14.08 – 14.39 m/s |
+| 10 | Yourself | Tu mejor tiempo | Replay de tu récord |
 
 **Notas sobre el rango:** cada categoría tiene varios rivales en la pista con tiempos
 distribuidos dentro de ese rango. El mejor rival de la categoría corre el tiempo bajo
 del rango, el peor el tiempo alto.
 
-**Nivel 9 (Yourself):** el rival es la repetición grabada de tu mejor carrera.
+**Nivel 10 (Yourself):** el rival es la repetición grabada de tu mejor carrera.
 Este es el único que sí acelera, porque eres tú.
 
 ### Implicación para el balance del jugador
@@ -94,8 +94,8 @@ export const LEVELS = [
   { id: 6, name: "Cyborg",                   fastest:  9.00, slowest:  9.68, runners: 6 },
   { id: 7, name: "Galaxy Athletes Meet",     fastest:  8.00, slowest:  9.00, runners: 6 },
   { id: 8, name: "God Velocity",             fastest:  7.50, slowest:  7.50, runners: 1 },
-  { id: 9, name: "Yourself",                 ghost: true,                    runners: 1 },
-  { id: 10, name: "Nacho & Juanpa",          fastest:  6.95, slowest:  7.10, runners: 2 },
+  { id: 9, name: "Nacho & Juanpa",           fastest:  6.95, slowest:  7.10, runners: 2 },
+  { id: 10, name: "Yourself",                ghost: true,                    runners: 1 },
 ];
 
 // Distribuir los tiempos de los rivales dentro del rango
@@ -325,8 +325,8 @@ vistazo entre ocho corredores.
 | 6 Cyborg | Piel metálica, visor con sensor rojo, aura |
 | 7 Galaxy | Marcianos verdes con antenas, aura violeta |
 | 8 God Velocity | Dorado, más alto (1.1), con aureola |
-| 9 Yourself | Tu propio kit al 50 % de opacidad |
-| 10 Nacho & Juanpa | Equipación real de cada uno, ver `NAMED_KITS` |
+| 9 Nacho & Juanpa | Equipación real de cada uno, ver `NAMED_KITS` |
+| 10 Yourself | Tu propio kit al 50 % de opacidad |
 
 ⚠️ **Ningún kit puede acercarse al rosa del jugador.** Las niñas iban de rosa
 y costaba distinguirse en la pista. Si se añade un kit nuevo, comprobarlo en
@@ -381,7 +381,7 @@ Simple, sin inflar:
 1. **Carrera** — el modo campaña, los 9 niveles en orden
 2. **Contrarreloj** — solo tú y el cronómetro, para farmear tu mejor tiempo
 
-El nivel 9 (Yourself) ya cubre la funcionalidad de fantasma, no hace falta un modo aparte.
+El nivel 10 (Yourself) ya cubre la funcionalidad de fantasma, no hace falta un modo aparte.
 
 ---
 
@@ -498,7 +498,7 @@ sprinter-remake/
 - [x] Reproductor de música por nivel — faltan los archivos, ver `public/music/`
 - [x] SFX: disparo de salida, juez, pasos, caída y meta (sintetizados, sin ficheros)
 - [ ] Partículas de polvo en las zancadas
-- [ ] Soporte táctil (dos botones grandes en mobile)
+- [x] Soporte táctil (dos botones grandes en mobile)
 - [ ] Deploy a GitHub Pages + itch.io
 - [ ] README con GIF de gameplay
 
@@ -532,7 +532,7 @@ y hace el juego independiente de la resolución.
 const PIXELS_PER_METER = 40;
 ```
 
-### Nivel 9 — Yourself
+### Nivel 10 — Yourself
 Grabar la posición del jugador cada frame durante su mejor carrera de la categoría 8.
 Guardar en localStorage y reproducir como corredor semitransparente.
 
@@ -546,8 +546,26 @@ ghostData.push({ t: raceTime, x: distance });
 Si el jugador aún no tiene un récord guardado, usar el tiempo de God Velocity como fallback.
 
 ### Input táctil
-Dos zonas grandes en la mitad inferior de la pantalla. Misma lógica de alternancia.
-Usar `touchstart` con `preventDefault()` para evitar delay y scroll.
+
+Implementado. Tres cosas que importan:
+
+**La zona que responde es media pantalla, no el botón.** A catorce pulsaciones
+por segundo nadie apunta: fallar el botón por diez píxeles arruinaría la
+carrera. Los dos rectángulos de abajo son la señal visual; lo que se toca de
+verdad es la mitad izquierda o derecha entera.
+
+**Lo tocable se registra al dibujar.** `Renderer.areas` se vacía en cada frame
+y cada cosa que se pinta apunta su rectángulo (`menu:3`, `back`, `pad:left`).
+`hitAt()` busca del último al primero, así que gana lo de encima y nunca hay
+zonas fantasma de una pantalla que ya no se ve. `Input` solo reporta el píxel
+tocado y el `pointerType`; quién decide qué significa es `main.js`.
+
+**Los botones grandes salen solos** la primera vez que llega un toque con
+`pointerType === 'touch'`. Con ratón no aparecen, y el juego no tiene que
+adivinar el dispositivo de antemano.
+
+En vertical sale un aviso de girar el teléfono: la pista es apaisada por
+naturaleza y en retrato queda una tira. Se puede jugar igual, pero mal.
 
 ---
 
@@ -609,7 +627,7 @@ Sin tope de velocidad, la escalera queda así:
 | 6 Cyborg | 9.00 s | 10.1 |
 | 7 Galaxy | 8.00 s | 11.8 |
 | 8 God Velocity | 7.50 s | 12.8 |
-| 10 Nacho & Juanpa | 6.95 s | 14.5 |
+| 9 Nacho & Juanpa | 6.95 s | 14.5 |
 
 La pantalla de resultados muestra tus **pulsaciones por segundo de media**. Es la
 forma de comprobar si la calibración está mal o si simplemente se pulsa más rápido

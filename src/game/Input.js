@@ -27,12 +27,13 @@ function eventClock(e) {
  */
 class Input {
   /**
-   * @param {HTMLElement} target zona táctil (se divide en dos mitades)
+   * @param {HTMLElement} target zona que recibe los toques (toda la pantalla)
    */
   constructor(target) {
     this.target = target;
     this.onPress = null;        // (side: 'left'|'right', clock: number) => void
-    this.onConfirm = null;      // () => void   Espacio / Enter / tap
+    this.onTap = null;          // (clientX, clientY, clock, pointerType) => void
+    this.onConfirm = null;      // () => void   Espacio / Enter
     this.onNavigate = null;     // (delta: -1 | 1) => void   arriba / abajo
     this.onBack = null;         // () => void   Escape
     this.onRestart = null;      // () => void   R
@@ -89,12 +90,15 @@ class Input {
     }
   }
 
+  /**
+   * Toque o clic. Se reportan las coordenadas en crudo y quién decide qué
+   * significan es main.js: aquí no se sabe si debajo hay un botón del menú o
+   * media pista. `pointerType` distingue el dedo del ratón, que es lo que
+   * hace aparecer los botones grandes.
+   */
   _onPointerDown(e) {
     e.preventDefault();
-    const rect = this.target.getBoundingClientRect();
-    const side = e.clientX - rect.left < rect.width / 2 ? 'left' : 'right';
-    this.onPress?.(side, eventClock(e));
-    this.onConfirm?.();
+    this.onTap?.(e.clientX, e.clientY, eventClock(e), e.pointerType);
   }
 
   destroy() {

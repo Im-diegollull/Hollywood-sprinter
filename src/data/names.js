@@ -58,12 +58,12 @@ const NAMES = {
   // God Velocity: solo hay uno
   8: ['GOD VELOCITY'],
 
-  // Yourself
-  9: ['TU FANTASMA'],
-
   // Los dos de verdad. El bote tiene justo dos nombres, así que salen siempre
   // los dos; lo que sí cambia es cuál de ellos lleva el mejor tiempo.
-  10: ['NACHO', 'JUANPA'],
+  9: ['NACHO', 'JUANPA'],
+
+  // Yourself
+  10: ['TU FANTASMA'],
 };
 
 const FALLBACK_NAMES = NAMES[4];

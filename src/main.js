@@ -1,6 +1,6 @@
 import { Race } from './game/Race.js';
 import { Input } from './game/Input.js';
-import { Renderer, STRIDE_LENGTH } from './render/Renderer.js';
+import { Renderer, STRIDE_LENGTH, VIEW_WIDTH } from './render/Renderer.js';
 import { SFX } from './audio/SFX.js';
 import { MusicManager } from './audio/MusicManager.js';
 import { Menu } from './ui/Menu.js';
@@ -14,6 +14,7 @@ const RESTART_LOCK = 0.4; // s de gracia tras la meta para no reiniciar sin quer
 // Al ganar se vuelve solo al menú: la categoría está hecha y lo siguiente
 // está allí. Da tiempo a leer la clasificación, y ENTER lo adelanta.
 const AUTO_MENU = 4.5;    // s
+const FLASH_TIME = 0.09;  // s que se queda encendido el botón táctil
 
 const recordKey = (level) => (level.id === 0 ? 'contrarreloj' : `categoria-${level.id}`);
 
@@ -37,6 +38,7 @@ const stats = {
   isRecord: false,
   unlocked: null, // nombre de la categoría recién desbloqueada, si la hay
   menuIn: null,   // segundos que faltan para volver al menú tras ganar
+  touch: false,   // true en cuanto se usa el dedo: saca los botones grandes
 };
 
 menu.setUnlocked(getUnlocked());
@@ -139,6 +141,51 @@ input.onPress = (side, clock) => {
   race.press(side, clock);
 };
 
+/**
+ * Un toque o clic. Aquí se decide qué significa según lo que haya debajo:
+ * el renderer registra en cada frame las zonas que ha dibujado, así que lo
+ * tocable es siempre exactamente lo que se ve.
+ *
+ * En carrera manda la mitad de pantalla, no el botón: a catorce pulsaciones
+ * por segundo nadie apunta, y fallar el botón por diez píxeles arruinaría la
+ * carrera. Los botones son la señal visual, la zona sensible es media pantalla.
+ */
+input.onTap = (clientX, clientY, clock, pointerType) => {
+  sfx.unlock();
+  music.unlock();
+  if (pointerType === 'touch') stats.touch = true;
+
+  const { x, y } = renderer.toView(clientX, clientY);
+  const hit = renderer.hitAt(x, y);
+
+  if (screen === SCREEN.MENU) {
+    if (hit === 'back') {
+      menu.back();
+      return;
+    }
+    if (hit?.startsWith('menu:')) {
+      menu.index = Number(hit.slice(5));
+      input.onConfirm();
+    }
+    return;
+  }
+
+  if (hit === 'back') {
+    toMenu();
+    return;
+  }
+
+  if (race.isRunning && !race.runner.fallen) {
+    const side = x < VIEW_WIDTH / 2 ? 'left' : 'right';
+    renderer.flash[side] = FLASH_TIME;
+    race.press(side, clock);
+    return;
+  }
+
+  // Fuera de carrera el toque vale como ENTER: empieza, repite o va al menú
+  if (!race.isRunning) input.onConfirm();
+};
+
 input.onNavigate = (delta) => {
   if (screen === SCREEN.MENU) menu.move(delta);
 };
@@ -181,7 +228,7 @@ function loop(now) {
   lastTime = now;
 
   if (screen === SCREEN.MENU) {
-    renderer.drawMenu(menu, (id) => getBest(`categoria-${id}`));
+    renderer.drawMenu(menu, (id) => getBest(`categoria-${id}`), stats);
   } else {
     const wasRunning = race.isRunning;
     race.update(dt, now / 1000);
@@ -198,6 +245,7 @@ function loop(now) {
     }
 
     stats.debug = debugPanel.visible;
+    renderer.fadeFlash(dt);
     renderer.draw(race, stats, dt);
   }
 

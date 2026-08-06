@@ -104,8 +104,47 @@ class Renderer {
     this.ctx = canvas.getContext('2d');
     this.track = new Track(raceDistance);
     this.camera = 0;   // adelanto actual, en metros
+    this.areas = [];   // zonas tocables del frame actual
+    this.flash = { left: 0, right: 0 };  // realce al pulsar los botones grandes
     this.resize();
     window.addEventListener('resize', () => this.resize());
+  }
+
+  /**
+   * Píxel de pantalla -> coordenadas de la vista de 960x540.
+   * El canvas va centrado con bandas a los lados, así que hay que descontar
+   * su posición: un toque en la banda cae fuera del rango y no acierta nada.
+   */
+  toView(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * VIEW_WIDTH,
+      y: ((clientY - rect.top) / rect.height) * VIEW_HEIGHT,
+    };
+  }
+
+  /**
+   * Zona tocable que hay bajo un punto, o null.
+   *
+   * Las zonas las registra el propio dibujo en cada frame (`this.areas`), así
+   * que lo que se puede tocar es exactamente lo que se está viendo. Se
+   * recorren al revés para que gane lo dibujado por encima.
+   */
+  hitAt(vx, vy) {
+    for (let i = this.areas.length - 1; i >= 0; i--) {
+      const a = this.areas[i];
+      if (vx >= a.x && vx <= a.x + a.w && vy >= a.y && vy <= a.y + a.h) return a.id;
+    }
+    return null;
+  }
+
+  area(id, x, y, w, h) {
+    this.areas.push({ id, x, y, w, h });
+  }
+
+  /** @returns {boolean} el hueco visible es más alto que ancho */
+  get isPortrait() {
+    return window.innerHeight > window.innerWidth;
   }
 
   resize() {
@@ -123,6 +162,7 @@ class Renderer {
 
   draw(race, stats, dt = 0.016) {
     const runner = race.runner;
+    this.areas.length = 0;
 
     this.track.follow(runner.distance + this.lookAhead(race, dt), runner.lane);
     this.track.draw(this.ctx, VIEW_WIDTH, VIEW_HEIGHT);
@@ -184,8 +224,9 @@ class Renderer {
    * @param {object} menu instancia de ui/Menu
    * @param {(levelId: number) => number|null} recordFor récord por categoría
    */
-  drawMenu(menu, recordFor) {
+  drawMenu(menu, recordFor, stats = {}) {
     const { ctx } = this;
+    this.areas.length = 0;
 
     this.track.follow(24, 3);
     this.track.draw(ctx, VIEW_WIDTH, VIEW_HEIGHT, { labels: false });
@@ -218,6 +259,7 @@ class Renderer {
       const y = top + i * rowHeight;
       const active = i === menu.index;
       const locked = Boolean(item.locked);
+      this.area(`menu:${i}`, x, y - rowHeight * 0.55, width, rowHeight);
 
       if (active) {
         ctx.fillStyle = 'rgba(255, 209, 102, 0.14)';
@@ -250,10 +292,61 @@ class Renderer {
     ctx.fillStyle = COLORS.textDim;
     ctx.font = '11px ui-monospace, monospace';
     ctx.fillText(
-      '↑ ↓ para elegir  ·  ENTER para empezar  ·  ESC para volver  ·  M silencia',
+      stats.touch
+        ? 'Toca una categoría para empezar'
+        : '↑ ↓ para elegir  ·  ENTER para empezar  ·  ESC para volver  ·  M silencia',
       VIEW_WIDTH / 2,
-      VIEW_HEIGHT - 34
+      VIEW_HEIGHT - 30
     );
+
+    if (menu.screen !== 'main') this.drawBackButton(stats);
+    if (stats.touch) this.drawRotateHint();
+  }
+
+  /**
+   * Volver atrás sin teclado. Solo aparece cuando hace falta.
+   * En carrera va arriba en el centro: la esquina la ocupa el cronómetro.
+   */
+  drawBackButton(stats = {}, x = 20, y = 20) {
+    const { ctx } = this;
+    const w = 92;
+    const h = 30;
+    this.area('back', x, y, w, h);
+
+    ctx.fillStyle = 'rgba(13, 17, 22, 0.72)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 8);
+    ctx.fill();
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = 'bold 12px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(stats.touch ? '‹ VOLVER' : '‹ ESC', x + w / 2, y + h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * La pista es apaisada por naturaleza: en vertical el juego se queda en una
+   * tira diminuta. Se sigue pudiendo jugar, pero conviene avisar.
+   */
+  drawRotateHint() {
+    if (!this.isPortrait) return;
+    const { ctx } = this;
+    const w = 300;
+    const h = 46;
+    const x = (VIEW_WIDTH - w) / 2;
+    const y = VIEW_HEIGHT - 92;
+
+    ctx.fillStyle = 'rgba(255, 209, 102, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 10);
+    ctx.fill();
+    ctx.fillStyle = '#101418';
+    ctx.font = 'bold 15px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('↻  GIRA EL TELÉFONO', VIEW_WIDTH / 2, y + h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
   }
 
   /**
@@ -534,11 +627,15 @@ class Renderer {
     }
     ctx.restore();
 
+    if (stats.touch) this.drawTouchPads(race, stats);
     if (stats.debug) this.drawDebugReadout(runner);
 
     ctx.textAlign = 'center';
     if (race.state === 'idle') {
-      this.drawBanner('ALTERNA ← →  PARA CORRER', 'ESC para volver al menú');
+      this.drawBanner(
+        stats.touch ? 'TOCA ◀ ▶ PARA CORRER' : 'ALTERNA ← →  PARA CORRER',
+        stats.touch ? 'Un pulgar en cada botón, alternando' : 'ESC para volver al menú'
+      );
     } else if (race.state === 'set') {
       this.drawStartCall(race.setPhase);
     } else if (runner.fallen) {
@@ -550,9 +647,59 @@ class Renderer {
       ctx.fillText('¡TE CAÍSTE!', VIEW_WIDTH / 2, 200);
       ctx.fillStyle = COLORS.textDim;
       ctx.font = '12px ui-monospace, monospace';
-      ctx.fillText('Las dos teclas a la vez no valen: alterna', VIEW_WIDTH / 2, 222);
+      ctx.fillText(
+        stats.touch ? 'Los dos a la vez no valen: alterna' : 'Las dos teclas a la vez no valen: alterna',
+        VIEW_WIDTH / 2,
+        222
+      );
     } else if (race.isFinished) {
       this.drawResults(race, stats);
+    }
+  }
+
+  /**
+   * Los dos botones gordos del móvil.
+   *
+   * Van abajo del todo y ocupan casi media pantalla de ancho cada uno: se
+   * juega con los pulgares y a 14 pulsaciones por segundo no se puede estar
+   * apuntando. La zona que responde de verdad es toda la mitad de la pantalla
+   * (lo decide main.js); esto es solo la parte que se ve.
+   */
+  drawTouchPads(race, stats) {
+    const { ctx } = this;
+    const h = 112;
+    const y = VIEW_HEIGHT - h - 16;
+    const w = VIEW_WIDTH / 2 - 26;
+
+    for (const [side, x] of [['left', 16], ['right', VIEW_WIDTH / 2 + 10]]) {
+      this.area(`pad:${side}`, x, y, w, h);
+
+      const lit = this.flash[side] > 0;
+      ctx.fillStyle = lit ? 'rgba(255, 209, 102, 0.34)' : 'rgba(13, 17, 22, 0.34)';
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 16);
+      ctx.fill();
+      ctx.strokeStyle = lit ? 'rgba(255, 209, 102, 0.9)' : 'rgba(232, 238, 243, 0.28)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = lit ? '#ffd166' : 'rgba(232, 238, 243, 0.7)';
+      ctx.font = 'bold 44px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(side === 'left' ? '◀' : '▶', x + w / 2, y + h / 2 + 2);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    ctx.lineWidth = 1;
+    if (!race.isFinished) this.drawBackButton(stats, VIEW_WIDTH / 2 - 46, 12);
+    this.drawRotateHint();
+  }
+
+  /** Apaga el realce de los botones. Constante de tiempo, no por frame. */
+  fadeFlash(dt) {
+    for (const side of ['left', 'right']) {
+      this.flash[side] = Math.max(this.flash[side] - dt, 0);
     }
   }
 
@@ -691,8 +838,12 @@ class Renderer {
     ctx.font = '11px ui-monospace, monospace';
     ctx.fillText(
       stats.menuIn != null
-        ? `Al menú en ${stats.menuIn}…  ·  ENTER para ir ya  ·  R para repetir`
-        : 'R para repetir  ·  ESC para el menú',
+        ? (stats.touch
+            ? `Al menú en ${stats.menuIn}…  ·  toca para ir ya`
+            : `Al menú en ${stats.menuIn}…  ·  ENTER para ir ya  ·  R para repetir`)
+        : (stats.touch
+            ? 'Toca para repetir  ·  ‹ VOLVER para el menú'
+            : 'R para repetir  ·  ESC para el menú'),
       VIEW_WIDTH / 2,
       y + height - 14
     );

@@ -2,7 +2,10 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#101418" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Sprinter — Remake</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,15 +16,18 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         overflow: hidden;
         touch-action: none;
+        overscroll-behavior: none;   /* sin tirar para recargar */
         -webkit-user-select: none;
         user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
       #app {
         position: relative;
         width: 100%; height: 100%;
         display: flex; align-items: center; justify-content: center;
+        touch-action: none;
       }
-      canvas { display: block; image-rendering: pixelated; }
+      canvas { display: block; image-rendering: pixelated; touch-action: none; }
 
       #debug {
         position: absolute; top: 12px; right: 12px;
@@ -33,6 +39,8 @@
         line-height: 1.5;
       }
       #debug.hidden { display: none; }
+      /* El panel de calibración no cabe en un teléfono */
+      @media (max-width: 720px) { #debug { display: none; } }
       #debug h2 { font-size: 11px; letter-spacing: 0.1em; color: #7fd1ff; margin-bottom: 8px; }
       #debug label { display: block; margin-bottom: 6px; color: #9fb0c0; }
       #debug .row { display: flex; justify-content: space-between; gap: 8px; }
