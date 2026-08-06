@@ -84,13 +84,45 @@ const KITS = {
 
   // Yourself: tu propio récord, translúcido
   9: kit({ alpha: 0.5, glow: 'rgba(224, 52, 155, 0.35)' }),
+
+  // Nacho & Juanpa: cada uno lleva el suyo, ver NAMED_KITS
+  10: kit({ scale: 1.02, skin: '#e8b98d', singlet: '#c62828', shorts: '#1f4fd8', shoes: '#ff4fa8' }),
 };
 
-// Si el nivel 9 no tiene replay guardado corre God Velocity de verdad, así que
-// no debe salir con pinta de fantasma.
-function kitFor(level, isGhost) {
+/**
+ * Equipaciones de atletas concretos, copiadas de sus fotos.
+ *
+ * Van por nombre y no por carril porque los nombres se sortean en cada
+ * carrera: si fueran por carril, Nacho saldría unas veces de rojo y otras de
+ * azul marino. La clave tiene que ser la persona.
+ */
+const NAMED_KITS = {
+  // Selección de Chile: peto rojo, short azul, manguito azul en un brazo y
+  // zapatillas fucsia
+  NACHO: kit({
+    scale: 1.02, skin: '#e8b98d', singlet: '#c62828', shorts: '#1f4fd8',
+    shoes: '#ff4fa8', hair: '#3b2a1c', sleeve: '#2f6de0',
+    bib: 'rgba(248, 250, 252, 0.92)',
+  }),
+
+  // Club: peto azul marino con la S blanca y short negro
+  JUANPA: kit({
+    scale: 1.02, skin: '#e0b183', singlet: '#1e2a4a', shorts: '#141821',
+    shoes: '#e8eef3', hair: '#221812',
+    bib: 'rgba(242, 244, 247, 0.95)',
+  }),
+};
+
+/**
+ * Si el nivel 9 no tiene replay guardado corre God Velocity de verdad, así que
+ * no debe salir con pinta de fantasma.
+ *
+ * @param {string} [name] nombre del rival, por si tiene equipación propia
+ */
+function kitFor(level, isGhost, name) {
+  if (name && NAMED_KITS[name]) return NAMED_KITS[name];
   if (level.ghost) return isGhost ? KITS[9] : KITS[8];
   return KITS[level.id] ?? KITS[4];
 }
 
-export { KITS, PLAYER_KIT, kitFor };
+export { KITS, NAMED_KITS, PLAYER_KIT, kitFor };

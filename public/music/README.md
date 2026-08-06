@@ -18,13 +18,15 @@ vale lo que te dé el grabador. **No hace falta convertir nada.**
 | `7.m4a` ✅ | Galaxy Athletes Meet | Synthwave espacial, atmosférico |
 | `8.m4a`/`mp3` ❌ | God Velocity | Épico máximo, coral, intenso |
 | `9.m4a`/`mp3` ❌ | Yourself | Ambiente, introspectivo, tenso |
+| `10.m4a`/`mp3` ❌ | Nacho & Juanpa | Tenso, jefe final |
 | `0.m4a` ✅ | Contrarreloj *(opcional)* | Neutro, sin drama |
 
 **No hacen falta todos.** El nivel que no tenga archivo corre en silencio y ya:
 puedes ir poniéndolos de uno en uno.
 
 ✅ ya está · ❌ falta. Los que faltan son **6 Cyborg, 8 God Velocity y 9
-Yourself**: esos tres niveles corren en silencio hasta que los pongas.
+Yourself** y **10 Nacho & Juanpa**: esos cuatro niveles corren en silencio
+hasta que los pongas.
 
 > `0.m4a` (contrarreloj) salió de "Game settings.m4a". Si iba destinado a otro
 > nivel, renómbralo y ya está: el nombre del archivo es lo único que manda.

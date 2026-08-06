@@ -67,6 +67,7 @@ Estos son los rangos reales. No inventar tiempos — usar estos.
 | 7 | Galaxy Athletes Meet | 9.00 – 8.00 s | 11.11 – 12.50 m/s |
 | 8 | God Velocity | 7.50 s | 13.33 m/s |
 | 9 | Yourself | Tu mejor tiempo | Replay de tu récord |
+| 10 | Nacho & Juanpa | 6.95 – 7.10 s | 14.08 – 14.39 m/s |
 
 **Notas sobre el rango:** cada categoría tiene varios rivales en la pista con tiempos
 distribuidos dentro de ese rango. El mejor rival de la categoría corre el tiempo bajo
@@ -94,6 +95,7 @@ export const LEVELS = [
   { id: 7, name: "Galaxy Athletes Meet",     fastest:  8.00, slowest:  9.00, runners: 6 },
   { id: 8, name: "God Velocity",             fastest:  7.50, slowest:  7.50, runners: 1 },
   { id: 9, name: "Yourself",                 ghost: true,                    runners: 1 },
+  { id: 10, name: "Nacho & Juanpa",          fastest:  6.95, slowest:  7.10, runners: 2 },
 ];
 
 // Distribuir los tiempos de los rivales dentro del rango
@@ -324,6 +326,7 @@ vistazo entre ocho corredores.
 | 7 Galaxy | Marcianos verdes con antenas, aura violeta |
 | 8 God Velocity | Dorado, más alto (1.1), con aureola |
 | 9 Yourself | Tu propio kit al 50 % de opacidad |
+| 10 Nacho & Juanpa | Equipación real de cada uno, ver `NAMED_KITS` |
 
 ⚠️ **Ningún kit puede acercarse al rosa del jugador.** Las niñas iban de rosa
 y costaba distinguirse en la pista. Si se añade un kit nuevo, comprobarlo en
@@ -339,7 +342,17 @@ la escala y el estilo de cabeza (`normal`, `ponytail`, `visor`, `antennae`,
 
 `src/data/names.js` guarda un bote de 14-16 nombres por categoría, temáticos:
 críos, niñas, adolescentes, atletas de selección, élite mundial, unidades
-robóticas, marcianos.
+robóticas, marcianos. La 10 solo tiene dos, que salen siempre.
+
+**Las equipaciones de Nacho y Juanpa van por nombre, no por carril**
+(`NAMED_KITS` en `Kits.js`). Como los nombres se sortean en cada carrera, si
+fueran por carril Nacho saldría unas veces de rojo y otras de azul marino. La
+clave tiene que ser la persona. `kit.sleeve` pinta un solo brazo de otro color,
+que es el manguito de compresión de Nacho.
+
+Los carriles se reparten **empezando por los de al lado del jugador**, para que
+las categorías de uno o dos rivales no se corran en la otra punta de la
+pantalla.
 
 **Los tiempos se barajan antes de repartirlos.** El rango de la categoría no
 cambia —el mejor rival de Olimpiadas siempre hace 9.58— pero quién lo corre
@@ -596,6 +609,7 @@ Sin tope de velocidad, la escalera queda así:
 | 6 Cyborg | 9.00 s | 10.1 |
 | 7 Galaxy | 8.00 s | 11.8 |
 | 8 God Velocity | 7.50 s | 12.8 |
+| 10 Nacho & Juanpa | 6.95 s | 14.5 |
 
 La pantalla de resultados muestra tus **pulsaciones por segundo de media**. Es la
 forma de comprobar si la calibración está mal o si simplemente se pulsa más rápido

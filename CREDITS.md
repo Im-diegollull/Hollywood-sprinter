@@ -29,6 +29,7 @@ Los temas van en `public/music/` (ver el README de esa carpeta).
 | 7 Galaxy Athletes Meet | `7.m4a` | Propia | Propia | — |
 | 8 God Velocity | *falta* | — | — | — |
 | 9 Yourself | *falta* | — | — | — |
+| 10 Nacho & Juanpa | *falta* | — | — | — |
 | Contrarreloj | `0.m4a` | Propia | Propia | — |
 
 > Los temas actuales están puestos como **propios**: si alguno no lo es,

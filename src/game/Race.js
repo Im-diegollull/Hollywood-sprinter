@@ -51,10 +51,14 @@ class Race {
   buildField() {
     const level = this.level;
     const ghost = this.ghostData;
+    // Carriles libres, los de al lado del jugador primero. Con la pista llena
+    // da igual el orden, pero en las categorías de uno o dos rivales evita
+    // que el duelo se corra en la otra punta de la pantalla.
     const lanes = [];
     for (let lane = 0; lane < LANE_COUNT; lane++) {
       if (lane !== PLAYER_LANE) lanes.push(lane);
     }
+    lanes.sort((a, b) => Math.abs(a - PLAYER_LANE) - Math.abs(b - PLAYER_LANE));
     const ghostLane = PLAYER_LANE + 1;
 
     if (level.ghost && ghost) {

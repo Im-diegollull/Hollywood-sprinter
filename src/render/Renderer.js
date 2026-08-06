@@ -142,7 +142,7 @@ class Renderer {
         lane: rival.lane,
         distance: rival.distance,
         speed: rival.speed,
-        kit: kitFor(race.level, Boolean(rival.isGhost)),
+        kit: kitFor(race.level, Boolean(rival.isGhost), rival.name),
         fallen: false,
       })),
     ].sort((a, b) => b.lane - a.lane);
@@ -207,10 +207,12 @@ class Renderer {
     );
 
     const items = menu.items;
-    const rowHeight = 38;
     const width = 520;
     const x = (VIEW_WIDTH - width) / 2;
-    const top = 168;
+    const top = 164;
+    // El alto de fila se aprieta según cuántas categorías haya, para que la
+    // lista nunca pise el pie de página al añadir niveles nuevos.
+    const rowHeight = Math.min(38, (VIEW_HEIGHT - 62 - top) / Math.max(items.length - 1, 1));
 
     items.forEach((item, i) => {
       const y = top + i * rowHeight;
@@ -359,8 +361,9 @@ class Renderer {
 
     // Brazos: codo doblado. Van en contrafase con la pierna del mismo lado,
     // que es lo que hace un corredor de verdad para compensar el giro.
-    ctx.strokeStyle = kit.skin;
     for (const side of [0, 1]) {
+      // Manguito de compresión en un solo brazo, como lo lleva Nacho
+      ctx.strokeStyle = side === 0 && kit.sleeve ? kit.sleeve : kit.skin;
       const pose = blendPose(
         samplePose(ARM_POSES, cycle + 0.5 + side * 0.5),
         ARM_STAND,

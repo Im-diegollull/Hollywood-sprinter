@@ -60,6 +60,10 @@ const NAMES = {
 
   // Yourself
   9: ['TU FANTASMA'],
+
+  // Los dos de verdad. El bote tiene justo dos nombres, así que salen siempre
+  // los dos; lo que sí cambia es cuál de ellos lleva el mejor tiempo.
+  10: ['NACHO', 'JUANPA'],
 };
 
 const FALLBACK_NAMES = NAMES[4];

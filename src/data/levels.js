@@ -12,6 +12,9 @@ const LEVELS = [
   { id: 7, name: 'Galaxy Athletes Meet',     fastest:  8.00, slowest:  9.00, runners: 7 },
   { id: 8, name: 'God Velocity',             fastest:  7.50, slowest:  7.50, runners: 1 },
   { id: 9, name: 'Yourself',                 ghost: true,                    runners: 1 },
+  // El jefe final de verdad: dos atletas reales por debajo de God Velocity.
+  // Hace falta rondar las 14 pulsaciones/s sostenidas para ganarles.
+  { id: 10, name: 'Nacho & Juanpa',          fastest:  6.95, slowest:  7.10, runners: 2 },
 ];
 
 const GHOST_FALLBACK = 7.50; // si aún no hay replay propio, corre God Velocity
